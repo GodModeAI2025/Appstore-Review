@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>App-Store-Freigabe-Check</title>
+<meta name="description" content="Skill für Claude und kompatible Agenten: prüft App-Code und Store-Metadaten gegen Apples App Review Guidelines und liefert einen Befundbericht mit Fundstellen und Behebungsvorschlägen.">
+<meta property="og:title" content="App-Store-Freigabe-Check">
+<meta property="og:description" content="Prüft App-Code und Store-Metadaten gegen Apples App Review Guidelines – bevor Apple es tut.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230a0a0b'/><path d='M9 16.5l4.6 4.6L23 11.7' stroke='%2334c759' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<style>
+:root{
+  --bg:#ffffff; --bg-soft:#f5f5f7; --bg-code:#1c1c1e;
+  --fg:#1d1d1f; --fg-soft:#55555a; --fg-faint:#86868b;
+  --line:#e0e0e4; --accent:#0a5fd3; --accent-soft:#e8f0fd;
+  --rot:#d7373f; --orange:#c96a12; --gelb:#a88413; --blau:#3a7bd5; --gruen:#1f9254;
+  --radius:12px; --wrap:1060px;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0d0d0f; --bg-soft:#161619; --bg-code:#161619;
+    --fg:#f2f2f4; --fg-soft:#b4b4bb; --fg-faint:#85858d;
+    --line:#2a2a2f; --accent:#5a9bf6; --accent-soft:#16233a;
+    --rot:#ff6b6b; --orange:#f0a04b; --gelb:#e0c04a; --blau:#6ba6f0; --gruen:#4cc47c;
+  }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--bg); color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue",Arial,sans-serif;
+  font-size:17px; line-height:1.6; letter-spacing:-.005em;
+}
+.wrap{max-width:var(--wrap); margin:0 auto; padding:0 24px}
+a{color:var(--accent)}
+code,pre{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+code{font-size:.88em}
+h1,h2,h3{letter-spacing:-.02em; line-height:1.2}
+section{padding:64px 0; border-top:1px solid var(--line)}
+section h2{font-size:1.7rem; margin:0 0 8px}
+section .lead{color:var(--fg-soft); margin:0 0 32px; max-width:62ch}
+
+/* Kopf */
+header{padding:80px 0 64px}
+.kicker{
+  display:inline-block; font-size:.78rem; font-weight:600; letter-spacing:.06em;
+  text-transform:uppercase; color:var(--accent); background:var(--accent-soft);
+  padding:5px 11px; border-radius:99px; margin-bottom:22px;
+}
+header h1{font-size:clamp(2.1rem,5.5vw,3.3rem); margin:0 0 18px}
+header p.intro{font-size:1.2rem; color:var(--fg-soft); max-width:60ch; margin:0 0 12px}
+.meta{color:var(--fg-faint); font-size:.92rem; margin:26px 0 0}
+.meta span{white-space:nowrap}
+.meta span+span::before{content:"·"; margin:0 10px; color:var(--line)}
+.knopfreihe{display:flex; flex-wrap:wrap; gap:12px; margin-top:32px}
+.knopf{
+  display:inline-block; padding:11px 20px; border-radius:99px; text-decoration:none;
+  font-size:.95rem; font-weight:500; border:1px solid transparent; transition:opacity .15s;
+}
+.knopf:hover{opacity:.85}
+.knopf.primaer{background:var(--fg); color:var(--bg)}
+.knopf.sekundaer{border-color:var(--line); color:var(--fg)}
+
+/* Codeblock */
+pre{
+  background:var(--bg-code); color:#e6e6ea; border:1px solid var(--line);
+  border-radius:var(--radius); padding:18px 20px; overflow-x:auto;
+  font-size:.86rem; line-height:1.65; margin:0;
+}
+pre .kom{color:#8a8a93}
+pre .pfad{color:#7fd1a0}
+.prompt{color:#7fa8ef}
+
+/* Raster */
+.raster{display:grid; gap:18px; grid-template-columns:repeat(auto-fit,minmax(272px,1fr))}
+.karte{border:1px solid var(--line); border-radius:var(--radius); padding:22px; background:var(--bg-soft)}
+.karte h3{font-size:1.02rem; margin:0 0 8px; display:flex; align-items:baseline; gap:9px}
+.karte h3 .nr{
+  font-size:.74rem; font-weight:600; color:var(--fg-faint);
+  border:1px solid var(--line); border-radius:6px; padding:1px 6px; background:var(--bg);
+}
+.karte p{margin:0; font-size:.93rem; color:var(--fg-soft)}
+
+/* Ablauf */
+ol.ablauf{list-style:none; counter-reset:s; padding:0; margin:0; display:grid; gap:2px}
+ol.ablauf li{counter-increment:s; display:grid; grid-template-columns:44px 1fr; gap:18px; padding:20px 0; border-bottom:1px solid var(--line)}
+ol.ablauf li:last-child{border-bottom:0}
+ol.ablauf li::before{
+  content:counter(s); font-variant-numeric:tabular-nums; font-weight:600; font-size:.9rem;
+  width:30px; height:30px; display:grid; place-items:center; border-radius:99px;
+  background:var(--bg-soft); border:1px solid var(--line); color:var(--fg-soft);
+}
+ol.ablauf h3{font-size:1.02rem; margin:2px 0 6px}
+ol.ablauf p{margin:0; color:var(--fg-soft); font-size:.95rem}
+
+/* Tabelle */
+.tabelle{width:100%; border-collapse:collapse; font-size:.94rem}
+.tabelle th,.tabelle td{text-align:left; padding:13px 14px; border-bottom:1px solid var(--line); vertical-align:top}
+.tabelle th{font-size:.78rem; text-transform:uppercase; letter-spacing:.05em; color:var(--fg-faint); font-weight:600}
+.tabelle td:first-child{white-space:nowrap; font-weight:500}
+.tabelle td small{display:block; color:var(--fg-faint); font-weight:400; white-space:normal}
+.punkt{display:inline-block; width:9px; height:9px; border-radius:99px; margin-right:9px; vertical-align:middle}
+.p-rot{background:var(--rot)} .p-orange{background:var(--orange)}
+.p-gelb{background:var(--gelb)} .p-blau{background:var(--blau)}
+.scroller{overflow-x:auto; -webkit-overflow-scrolling:touch}
+
+/* Zweispalter */
+.zwei{display:grid; gap:40px; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); align-items:start}
+.zwei h3{font-size:1.02rem; margin:0 0 10px}
+.zwei p{margin:0 0 14px; color:var(--fg-soft); font-size:.95rem}
+
+/* Irrtümer */
+ul.irrtuemer{list-style:none; padding:0; margin:0; display:grid; gap:14px}
+ul.irrtuemer li{padding-left:20px; position:relative; color:var(--fg-soft); font-size:.95rem}
+ul.irrtuemer li::before{content:""; position:absolute; left:0; top:.62em; width:7px; height:7px; border-radius:99px; background:var(--gruen)}
+ul.irrtuemer b{color:var(--fg); font-weight:600}
+
+/* Grenzen */
+.hinweis{border:1px solid var(--line); border-left:3px solid var(--fg-faint); border-radius:var(--radius); padding:20px 22px; background:var(--bg-soft)}
+.hinweis p{margin:0 0 10px; color:var(--fg-soft); font-size:.95rem}
+.hinweis p:last-child{margin:0}
+
+footer{border-top:1px solid var(--line); padding:40px 0 56px; color:var(--fg-faint); font-size:.9rem}
+footer p{margin:0 0 6px}
+@media(max-width:620px){
+  body{font-size:16px}
+  section{padding:48px 0}
+  header{padding:56px 0 44px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <span class="kicker">Skill für Claude</span>
+    <h1>App-Store-Freigabe-Check</h1>
+    <p class="intro">Prüft App-Code und Store-Metadaten gegen Apples App Review Guidelines – bevor Apple es tut. Ergebnis ist ein deutschsprachiger Befundbericht mit Ablehnungsrisiken, Fundstellen und Behebungsvorschlägen.</p>
+    <div class="knopfreihe">
+      <a class="knopf primaer" href="https://github.com/GodModeAI2025/Appstore-Review">Repository auf GitHub</a>
+      <a class="knopf sekundaer" href="#installation">Installation</a>
+      <a class="knopf sekundaer" href="SKILL.md">SKILL.md lesen</a>
+    </div>
+    <p class="meta">
+      <span>Stand: Guidelines vom 8. Juni 2026</span>
+      <span>iOS, iPadOS, macOS, watchOS, tvOS, visionOS</span>
+      <span>Swift, Objective-C, React Native, Expo</span>
+      <span>MIT</span>
+    </p>
+  </div>
+</header>
+
+<section id="module">
+  <div class="wrap">
+    <h2>Fünf Regelmodule, vollständig abgedeckt</h2>
+    <p class="lead">Jeder Guideline-Punkt mit Kern der Regel, Risikostufe, Erkennungsmustern für Swift und React Native/Expo, typischen Verstößen, Prüfliste und Behebungsempfehlung. Geladen wird nur, was das Risikoprofil des Projekts verlangt.</p>
+    <div class="raster">
+      <div class="karte">
+        <h3><span class="nr">1</span> Sicherheit</h3>
+        <p>Anstößige Inhalte, nutzergenerierte Inhalte, Kids-Kategorie, körperliche Schäden, Entwicklerinformationen, Datensicherheit, Meldung krimineller Aktivitäten.</p>
+      </div>
+      <div class="karte">
+        <h3><span class="nr">2</span> Leistung</h3>
+        <p>Vollständigkeit, Betatests, Metadaten, Hardware-Kompatibilität, Mac-App-Store-Regeln, Software-Anforderungen: private APIs, nachgeladener Code, Hintergrundmodi, IPv6, Erweiterungen, Werbung.</p>
+      </div>
+      <div class="karte">
+        <h3><span class="nr">3</span> Geschäft</h3>
+        <p>In-App-Kauf, externe Kauf-Links mit regionalen Sonderregeln, Abonnements, Reader-Apps, Kryptowährungen, zulässige Geschäftsmodelle, Paywall-Prüfung, Entscheidungsbaum für digitale Güter.</p>
+      </div>
+      <div class="karte">
+        <h3><span class="nr">4</span> Design</h3>
+        <p>Nachahmer, Mindestfunktionalität, Spam, Erweiterungen, Apple-Dienste, Push-Benachrichtigungen, Mini-Apps und Emulatoren, Login-Dienste, Apple Pay, Monetarisierung von Systemfunktionen.</p>
+      </div>
+      <div class="karte">
+        <h3><span class="nr">5</span> Recht</h3>
+        <p>Datenschutzerklärung, Einwilligung, Purpose-Strings, Kontolöschung, Privacy-Manifest, ATT, Gesundheitsdaten, Kinder, Standort, geistiges Eigentum, Glücksspiel, VPN, MDM.</p>
+      </div>
+      <div class="karte">
+        <h3><span class="nr">+</span> Schnellscan</h3>
+        <p>Musterbasierter Rohscan in Python, ohne Abhängigkeiten. Findet private APIs, hartcodierte Schlüssel, externe Checkout-URLs, vage Purpose-Strings, Tracking ohne ATT, Android-Verweise und Debug-Reste.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="ablauf">
+  <div class="wrap">
+    <h2>Wie die Prüfung abläuft</h2>
+    <p class="lead">Apples Gutachter lesen keinen Quellcode. Sie starten die App, klicken sich durch und lesen Info.plist, Entitlements, Privacy-Manifest und die Metadaten. Befunde werden deshalb aus der Sicht formuliert, die der Gutachter tatsächlich hat.</p>
+    <ol class="ablauf">
+      <li>
+        <div>
+          <h3>Projekt erkennen</h3>
+          <p>Technologie bestimmen, alle Konfigurationsquellen einsammeln – Info.plist, Entitlements, PrivacyInfo.xcprivacy, app.json, eas.json – und daraus das Risikoprofil ableiten: Zahlungen, Konten, Tracking-SDKs, nutzergenerierte Inhalte, Sonderzielgruppen.</p>
+        </div>
+      </li>
+      <li>
+        <div>
+          <h3>Module laden und prüfen</h3>
+          <p>Nur die Module, die das Risikoprofil verlangt, dafür vollständig. Bei Expo zusätzlich der Weg über Config-Plugins, weil viele Purpose-Strings erst beim Prebuild entstehen.</p>
+        </div>
+      </li>
+      <li>
+        <div>
+          <h3>Befunde bewerten</h3>
+          <p>Jeder Befund braucht eine konkrete Fundstelle oder eine konkret fehlende Stelle. Vermutungen ohne Beleg landen im Abschnitt „Offene Fragen an das Team“ statt im Befundteil.</p>
+        </div>
+      </li>
+      <li>
+        <div>
+          <h3>Bericht schreiben</h3>
+          <p>Feste Struktur: Freigabe-Ampel, kritische und hohe Befunde mit Behebung und Aufwand, mittlere Befunde als Tabelle, was bereits gut gelöst ist, offene Fragen, Einreichungs-Checkliste.</p>
+        </div>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<section id="stufen">
+  <div class="wrap">
+    <h2>Vier Risikostufen</h2>
+    <p class="lead">Die Stufe beschreibt, was passiert, wenn niemand etwas tut. Ein Bericht mit achtzig gleichgewichteten Punkten wird nicht gelesen – lieber fünf gut begründete kritische Befunde als vierzig Hinweise.</p>
+    <div class="scroller">
+      <table class="tabelle">
+        <thead><tr><th>Stufe</th><th>Bedeutung</th><th>Beispiele</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><span class="punkt p-rot"></span>Kritisch</td>
+            <td>Ablehnung ist sicher oder das Entwicklerkonto ist gefährdet<small>sofort beheben</small></td>
+            <td>Digitale Güter an StoreKit vorbei, private APIs, nachgeladener ausführbarer Code, fehlende Datenschutzerklärung, Tracking ohne ATT, fehlende Kontolöschung</td>
+          </tr>
+          <tr>
+            <td><span class="punkt p-orange"></span>Hoch</td>
+            <td>Ablehnung ist wahrscheinlich, Gutachter stoßen regelmäßig darauf<small>vor Einreichung beheben</small></td>
+            <td>Drittanbieter-Login ohne 4.8-konforme Alternative, nutzergenerierte Inhalte ohne Melden und Blockieren, WebView-Wrapper, vage Purpose-Strings, Paywall ohne Preis und Laufzeit</td>
+          </tr>
+          <tr>
+            <td><span class="punkt p-gelb"></span>Mittel</td>
+            <td>Kann zur Ablehnung führen, hängt vom Gutachter und Kontext ab<small>bewusst entscheiden</small></td>
+            <td>Android-Verweise, unbegründete Hintergrundmodi, <code>console.log</code> in Produktion, Push-Abfrage beim ersten Start, Werbung im Widget</td>
+          </tr>
+          <tr>
+            <td><span class="punkt p-blau"></span>Hinweis</td>
+            <td>Kein Ablehnungsgrund, aber Nacharbeit vor Release sinnvoll<small>optional</small></td>
+            <td>Veraltete Pakete, fehlende Review-Notizen, Screenshots ohne passende Gerätegrößen</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="schnellscan">
+  <div class="wrap">
+    <h2>Schnellscan</h2>
+    <p class="lead">Das Skript durchsucht ein Projekt in Sekunden nach bekannten Mustern und liefert eine Rohliste mit Fundstelle und Guideline-Bezug. Python 3, keine Abhängigkeiten. Die Ausgabe ist ein Prüfauftrag, kein Urteil.</p>
+    <div class="zwei">
+      <div>
+        <h3>Aufruf</h3>
+        <pre><span class="prompt">$</span> python3 scripts/schnellscan.py /pfad/zum/projekt
+<span class="prompt">$</span> python3 scripts/schnellscan.py /pfad/zum/projekt --json</pre>
+        <p style="margin-top:14px">Im Ablauf des Skills läuft der Scan automatisch in Phase 1. Jeder Treffer wird anschließend im Kontext der Module bewertet – Stripe im Code ist zum Beispiel nur dann ein Befund, wenn der Kaufpfad digitale, in der App konsumierte Güter betrifft.</p>
+      </div>
+      <div>
+        <h3>Ausgabe</h3>
+        <pre><span class="kom"># Schnellscan – Rohbefunde</span>
+
+Dateien gescannt: 3
+
+<span class="kom">## Hoch</span>
+- [3.1.1] Externe Checkout-URL – kritisch,
+  falls digitale Güter betroffen
+  <span class="pfad">App/Kauf.tsx:3</span>
+- [5.1.1(iv)] Purpose-String für
+  NSCameraUsageDescription ist zu vage
+  <span class="pfad">Info.plist</span>
+
+<span class="kom">## Mittel</span>
+- [5.1.1(x)] Kein PrivacyInfo.xcprivacy
+  gefunden <span class="pfad">(projektweit)</span></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="installation">
+  <div class="wrap">
+    <h2>Installation</h2>
+    <p class="lead">Alle Verweise innerhalb des Skills sind relativ, der Ordnername ist frei wählbar.</p>
+    <div class="zwei">
+      <div>
+        <h3>Claude Code</h3>
+        <pre><span class="prompt">$</span> git clone https://github.com/GodModeAI2025/Appstore-Review.git \
+    ~/.claude/skills/app-store-freigabe-check</pre>
+        <p style="margin-top:14px">Alternativ das Repository im Projekt unter <code>.claude/skills/app-store-freigabe-check/</code> ablegen, dann gilt der Skill nur dort.</p>
+        <h3 style="margin-top:26px">Cowork und Claude.ai</h3>
+        <p><code>SKILL.md</code> zusammen mit den Ordnern <code>references/</code> und <code>scripts/</code> als Skill hochladen oder das Repository als ZIP importieren.</p>
+        <h3>Andere Agenten</h3>
+        <p>Jeder Agent, der Skills im SKILL.md-Format liest, kann das Repository als Skill-Verzeichnis einbinden.</p>
+      </div>
+      <div>
+        <h3>Dann im Projektverzeichnis fragen</h3>
+        <pre>Prüfe diese App auf App-Store-Tauglichkeit.
+
+Wird Apple das durchwinken? Schau dir
+besonders die Paywall an.
+
+Apple hat uns wegen Guideline 5.1.1(v)
+abgelehnt – was fehlt?
+
+Ist ATT bei unserem SDK-Setup nötig?
+
+Prüfe die Purpose-Strings und das
+Privacy-Manifest.
+
+Wir bauen Chat mit Bildupload – was
+verlangt Apple dafür?</pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="irrtuemer">
+  <div class="wrap">
+    <h2>Fehlalarme, die der Skill vermeidet</h2>
+    <p class="lead">Ein Gutachter, der alles anstreicht, ist wertlos. Diese Fälle sind ausdrücklich als Fehlurteile hinterlegt.</p>
+    <ul class="irrtuemer">
+      <li><b>Ein Stripe-Import allein ist kein Befund.</b> Für physische Waren, Dienstleistungen außerhalb der App oder Spenden an anerkannte Organisationen ist Stripe zulässig.</li>
+      <li><b>Sign in with Apple ist keine generelle Pflicht.</b> Pflicht ist eine 4.8-konforme Alternative, sobald ein Drittanbieter-Login existiert. E-Mail und Passwort allein lösen 4.8 nicht aus.</li>
+      <li><b>ATT ist nur bei Tracking Pflicht.</b> Firebase Analytics ohne Verknüpfung mit Drittdaten ist kein Tracking im Sinne von 5.1.2. Werbe-SDKs mit IDFA-Zugriff dagegen fast immer.</li>
+      <li><b>OTA-Updates sind nicht verboten.</b> <code>expo-updates</code> und CodePush sind für Fehlerbehebungen zulässig. Das Risiko entsteht bei neuen Funktionen an Apple vorbei.</li>
+      <li><b>Fehlende Kontolöschung ist kein Befund ohne Konto.</b> Ohne Registrierung gibt es nichts zu löschen.</li>
+      <li><b>Nicht jede WebView ist ein Wrapper.</b> Eine WebView für AGB, Hilfe oder OAuth ist normal. 4.2 greift, wenn die Kernfunktion daraus besteht.</li>
+      <li><b>Regionale Sonderregeln gelten nur regional.</b> Externe Kauf-Links sind in der EU, den USA, Brasilien und Japan unter Auflagen zulässig – die Zielregionen entscheiden.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="ablehnung">
+  <div class="wrap">
+    <h2>Nach einer Ablehnung</h2>
+    <p class="lead">Wird dem Agenten der Text einer Ablehnung übergeben, arbeitet er entlang der genannten Guideline statt entlang des Verdachts im Team.</p>
+    <div class="zwei">
+      <div>
+        <h3>Guideline zuerst, Code danach</h3>
+        <p>Apples Formulierungen sind knapp. Der passende Modulabschnitt erklärt, was der Gutachter wahrscheinlich gemeint hat – häufig etwas anderes, als das Team vermutet, etwa den Paywall-Text statt der StoreKit-Implementierung.</p>
+      </div>
+      <div>
+        <h3>Antwort für das Resolution Center</h3>
+        <p>Zur Behebung kommt ein Antwortvorschlag: sachlich, kurz, mit Verweis auf die konkrete Änderung im neuen Build. Hält das Team die Ablehnung für falsch, wird die Argumentation entlang der Guideline-Wortwahl geführt, nicht entlang des Codes.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="grenzen">
+  <div class="wrap">
+    <h2>Grenzen</h2>
+    <div class="hinweis">
+      <p>Der Skill ersetzt keine Rechtsberatung zu DSGVO, COPPA, Finanz- oder Glücksspielrecht. Wo er auf solche Pflichten stößt, markiert er sie als offene Frage.</p>
+      <p>Er prüft kein Design gegen die Human Interface Guidelines. Hier zählt nur, was zur Ablehnung führt.</p>
+      <p>Metadaten in App Store Connect kann er nicht einsehen. Beschreibung, Screenshots, Altersfreigabe-Fragebogen und Review-Notizen müssen ihm bei Bedarf mitgegeben werden.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p>App-Store-Freigabe-Check · Autor: Mark Zimmermann · Lizenz: MIT</p>
+    <p>Stand der Regeln: App Review Guidelines vom 8. Juni 2026, geprüft September 2026. Kein Produkt von Apple und nicht mit Apple verbunden.</p>
+    <p><a href="https://github.com/GodModeAI2025/Appstore-Review">Repository</a> · <a href="SKILL.md">SKILL.md</a> · <a href="README.md">README</a></p>
+  </div>
+</footer>
+
+</body>
+</html>
