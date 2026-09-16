@@ -71,7 +71,7 @@ TRACKING_SDKS = [
 NATIVE_ENDUNGEN = {".swift", ".m", ".mm", ".h"}
 REQUIRED_REASON_APIS = {
     "NSPrivacyAccessedAPICategoryUserDefaults": r"\b(NS)?UserDefaults\b|@AppStorage\b",
-    "NSPrivacyAccessedAPICategoryFileTimestamp": r"NSFileCreationDate|NSFileModificationDate|\[\s*\.(creationDate|modificationDate)\s*\]|\.(contentModificationDateKey|creationDateKey)\b|NSURL(ContentModificationDate|CreationDate)Key|\b[fl]?stat(at)?\s*\(|\bf?getattrlist(bulk|at)?\s*\(",
+    "NSPrivacyAccessedAPICategoryFileTimestamp": r"NSFileCreationDate|NSFileModificationDate|[\w)\]?!]\[\s*\.(creationDate|modificationDate)\s*\]|\.(contentModificationDateKey|creationDateKey)\b|NSURL(ContentModificationDate|CreationDate)Key|(?<![\w./])(?<!func )[fl]?stat(at)?\s*\((?!\s*\w+\s*:)|\bf?getattrlist(bulk|at)?\s*\(",
     "NSPrivacyAccessedAPICategorySystemBootTime": r"\bsystemUptime\b|\bmach_absolute_time\s*\(",
     "NSPrivacyAccessedAPICategoryDiskSpace": r"volume(Available|Total)Capacity|NSFileSystem(Free)?Size|\.systemFreeSize\b|\bf?statv?fs\s*\(",
     "NSPrivacyAccessedAPICategoryActiveKeyboards": r"\bactiveInputModes\b",
@@ -158,7 +158,7 @@ MUSTER: list[Muster] = [
 
     # --- 5.1.2(i) Drittanbieter-KI ---
     Muster(r"api\.openai\.com|api\.anthropic\.com|generativelanguage\.googleapis\.com|api\.mistral\.ai|api\.groq\.com|openrouter\.ai/api|api\.deepseek\.com|api\.perplexity\.ai", "mittel", "5.1.2(i)", "Endpunkt eines KI-Anbieters – vor dem ersten Senden in der App offenlegen, was an wen geht, und ausdrücklich zustimmen lassen", flags=re.IGNORECASE),
-    Muster(r"import\s+(OpenAI|Anthropic|GoogleGenerativeAI|FirebaseVertexAI|FirebaseAI)\b|[\"'](openai|@anthropic-ai/sdk|@google/generative-ai|@google/genai|firebase/vertexai|firebase/ai)[\"']", "mittel", "5.1.2(i)", "SDK eines KI-Anbieters – vor dem ersten Senden in der App offenlegen, was an wen geht, und ausdrücklich zustimmen lassen"),
+    Muster(r"import\s+(OpenAI|Anthropic|GoogleGenerativeAI|FirebaseVertexAI|FirebaseAI)\b|(from|import|require\()\s*[\"'](openai|@anthropic-ai/sdk|@google/generative-ai|@google/genai|firebase/vertexai|firebase/ai)(/[^\"']*)?[\"']", "mittel", "5.1.2(i)", "SDK eines KI-Anbieters – vor dem ersten Senden in der App offenlegen, was an wen geht, und ausdrücklich zustimmen lassen"),
 
     # --- 2.4.2 Mining ---
     Muster(r"(coinhive|cryptonight|stratum\+tcp|xmrig|miner\.start)", "kritisch", "2.4.2", "Hinweis auf Krypto-Mining auf dem Gerät", flags=re.IGNORECASE),
@@ -272,6 +272,9 @@ def scannen(wurzel: Path, max_treffer: int) -> tuple[list[Treffer], dict]:
             if Path(r).suffix not in NATIVE_ENDUNGEN:
                 continue
             for zeilen_nr, zeile in enumerate(t.splitlines(), start=1):
+                # Kommentarzeilen zählen nicht als Nutzung
+                if zeile.lstrip().startswith(("//", "/*", "*")):
+                    continue
                 if rx.search(zeile):
                     rr_genutzt[kategorie] = f"{r}:{zeilen_nr}"
                     break
