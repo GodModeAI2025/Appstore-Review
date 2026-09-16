@@ -72,7 +72,7 @@ Verwende diese Struktur für jeden Bericht. Abschnitte ohne Inhalt bleiben stehe
 
 ## 7. Vorgeschlagene Review-Notizen
 
-{Optional, aber wertvoll: Text für das Feld „Notes for Review" in App Store Connect – Demo-Zugang, wo versteckte Funktionen zu finden sind, warum bestimmte Berechtigungen nötig sind, Nachweise für Lizenzen. Auf Englisch, weil Apples Gutachter Englisch lesen.}
+{Optional, aber wertvoll: Text für das Feld „Notes for Review" in App Store Connect – Demo-Zugang, wo versteckte Funktionen zu finden sind, warum bestimmte Berechtigungen nötig sind, Nachweise für Lizenzen. Auf Englisch, weil Apples Gutachter Englisch lesen. Das Feld nimmt höchstens 4.000 Zeichen; längere Texte lehnt App Store Connect ohne brauchbare Meldung ab, deshalb vor dem Einfügen zählen.}
 
 ---
 

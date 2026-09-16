@@ -64,6 +64,19 @@ TRACKING_SDKS = [
     r"Amplitude", r"Mixpanel", r"Segment", r"@segment/analytics-react-native",
 ]
 
+# Required-Reason-APIs im eigenen nativen Code und die Kategorie, die dafür in
+# PrivacyInfo.xcprivacy (oder Expo: ios.privacyManifests) stehen muss. Nur Swift und
+# Objective-C: React-Native-Pakete bringen ihren Manifest selbst mit oder werden über
+# Expo ergänzt, und JavaScript-Namen wie fs.stat() würden hier nur Fehlalarme liefern.
+NATIVE_ENDUNGEN = {".swift", ".m", ".mm", ".h"}
+REQUIRED_REASON_APIS = {
+    "NSPrivacyAccessedAPICategoryUserDefaults": r"\b(NS)?UserDefaults\b|@AppStorage\b",
+    "NSPrivacyAccessedAPICategoryFileTimestamp": r"NSFileCreationDate|NSFileModificationDate|\[\s*\.(creationDate|modificationDate)\s*\]|\.(contentModificationDateKey|creationDateKey)\b|NSURL(ContentModificationDate|CreationDate)Key|\b[fl]?stat(at)?\s*\(|\bf?getattrlist(bulk|at)?\s*\(",
+    "NSPrivacyAccessedAPICategorySystemBootTime": r"\bsystemUptime\b|\bmach_absolute_time\s*\(",
+    "NSPrivacyAccessedAPICategoryDiskSpace": r"volume(Available|Total)Capacity|NSFileSystem(Free)?Size|\.systemFreeSize\b|\bf?statv?fs\s*\(",
+    "NSPrivacyAccessedAPICategoryActiveKeyboards": r"\bactiveInputModes\b",
+}
+
 # Muster mit Guideline-Bezug. (regex, stufe, guideline, beschreibung, nur-in)
 @dataclass
 class Muster:
@@ -142,6 +155,10 @@ MUSTER: list[Muster] = [
     # --- 1.2 UGC ---
     Muster(r"(reportUser|reportContent|blockUser|Melden|Blockieren|Report|Block)\b", "ok", "1.2", "Melde-/Blockierfunktion gefunden"),
     Muster(r"(sendMessage|postComment|uploadImage|createPost|ChatScreen|CommentList)", "hinweis", "1.2", "Nutzergenerierte Inhalte – Filter, Melden, Blockieren und Betreiberkontakt müssen vorhanden sein"),
+
+    # --- 5.1.2(i) Drittanbieter-KI ---
+    Muster(r"api\.openai\.com|api\.anthropic\.com|generativelanguage\.googleapis\.com|api\.mistral\.ai|api\.groq\.com|openrouter\.ai/api|api\.deepseek\.com|api\.perplexity\.ai", "mittel", "5.1.2(i)", "Endpunkt eines KI-Anbieters – vor dem ersten Senden in der App offenlegen, was an wen geht, und ausdrücklich zustimmen lassen", flags=re.IGNORECASE),
+    Muster(r"import\s+(OpenAI|Anthropic|GoogleGenerativeAI|FirebaseVertexAI|FirebaseAI)\b|[\"'](openai|@anthropic-ai/sdk|@google/generative-ai|@google/genai|firebase/vertexai|firebase/ai)[\"']", "mittel", "5.1.2(i)", "SDK eines KI-Anbieters – vor dem ersten Senden in der App offenlegen, was an wen geht, und ausdrücklich zustimmen lassen"),
 
     # --- 2.4.2 Mining ---
     Muster(r"(coinhive|cryptonight|stratum\+tcp|xmrig|miner\.start)", "kritisch", "2.4.2", "Hinweis auf Krypto-Mining auf dem Gerät", flags=re.IGNORECASE),
@@ -237,10 +254,38 @@ def scannen(wurzel: Path, max_treffer: int) -> tuple[list[Treffer], dict]:
     if gefundene_sdks and not hat_att:
         treffer.append(Treffer("hoch", "5.1.2", f"Tracking-/Werbe-SDKs ohne ATT-Abfrage: {', '.join(gefundene_sdks)}", "(projektweit)", 0, ""))
 
-    # Privacy-Manifest
-    hat_manifest = any(r.endswith("PrivacyInfo.xcprivacy") for r in gesamt_text)
+    # Privacy-Manifest: als Datei oder, bei Expo, als ios.privacyManifests in app.json
+    hat_manifest = any(r.endswith("PrivacyInfo.xcprivacy") for r in gesamt_text) or \
+        any("privacyManifests" in t for t in appjson_texte)
+
+    # Required-Reason-APIs: im nativen Code genutzt, aber nirgends deklariert?
+    # Gesucht wird in allen .xcprivacy-Dateien und in Expo-Konfigurationen, weil
+    # Expo die Gründe aus app.json/app.config.* beim Prebuild in den Manifest schreibt.
+    deklarationen = "\n".join(
+        t for r, t in gesamt_text.items()
+        if r.endswith(".xcprivacy") or Path(r).name.startswith(("app.json", "app.config."))
+    )
+    rr_genutzt: dict[str, str] = {}
+    for kategorie, regex in REQUIRED_REASON_APIS.items():
+        rx = re.compile(regex)
+        for r, t in gesamt_text.items():
+            if Path(r).suffix not in NATIVE_ENDUNGEN:
+                continue
+            for zeilen_nr, zeile in enumerate(t.splitlines(), start=1):
+                if rx.search(zeile):
+                    rr_genutzt[kategorie] = f"{r}:{zeilen_nr}"
+                    break
+            if kategorie in rr_genutzt:
+                break
+    rr_fehlend = sorted(k for k in rr_genutzt if k not in deklarationen)
+
     if not hat_manifest:
-        treffer.append(Treffer("mittel", "5.1.1(x)", "Kein PrivacyInfo.xcprivacy gefunden – Required-Reason-APIs und Datenerhebung müssen deklariert sein", "(projektweit)", 0, ""))
+        genutzt_text = f" Im nativen Code genutzt: {', '.join(sorted(rr_genutzt))}." if rr_genutzt else ""
+        treffer.append(Treffer("mittel", "5.1.1(x)", "Kein PrivacyInfo.xcprivacy gefunden – Required-Reason-APIs und Datenerhebung müssen deklariert sein." + genutzt_text, "(projektweit)", 0, ""))
+    else:
+        for kategorie in rr_fehlend:
+            datei, _, zeile = rr_genutzt[kategorie].rpartition(":")
+            treffer.append(Treffer("hoch", "5.1.1(x)", f"Required-Reason-API genutzt, aber {kategorie} ist nicht deklariert – App Store Connect weist den Upload mit ITMS-91053 ab", datei, int(zeile), ""))
 
     # Konto ohne Löschung
     hat_konto = bool(re.search(r"(createAccount|signUp|register\(|Registrieren|Create Account)", alle_code, re.IGNORECASE))
@@ -266,6 +311,8 @@ def scannen(wurzel: Path, max_treffer: int) -> tuple[list[Treffer], dict]:
         "tracking_sdks": gefundene_sdks,
         "att_vorhanden": hat_att,
         "privacy_manifest": hat_manifest,
+        "required_reason_apis": sorted(rr_genutzt),
+        "required_reason_apis_undeklariert": rr_fehlend if hat_manifest else sorted(rr_genutzt),
         "konto": hat_konto, "kontoloeschung": hat_loeschung,
         "drittanbieter_login": hat_dritt_login, "apple_login": hat_apple_login,
         "iap": hat_iap, "restore": hat_restore,
