@@ -4,7 +4,7 @@ description: Prüft App-Code und App-Store-Metadaten gegen Apples App Review Gui
 license: MIT
 metadata:
   author: Mark Zimmermann
-  version: "1.0.0"
+  version: "1.1.0"
   stand: "App Review Guidelines vom 8. Juni 2026, geprüft September 2026"
 ---
 
@@ -33,10 +33,11 @@ Bevor du Regeln anwendest, stelle fest, womit du es zu tun hast. Das entscheidet
    - Gibt es Zahlungen, Abos, virtuelle Währungen, Spenden? → Modul 3 wird Pflicht mit voller Tiefe.
    - Gibt es Konten, Login, Drittanbieter-Login? → 5.1.1(v) und 4.8.
    - Gibt es Analytics-, Werbe- oder Attributions-SDKs? → ATT, Privacy-Manifest, 5.1.2.
+   - Gehen Nutzerinhalte an einen KI-Dienst Dritter (OpenAI, Anthropic, Gemini …)? → 5.1.2(i): Offenlegung und Zustimmung in der App, nicht nur in der Datenschutzerklärung.
    - Gibt es Chat, Kommentare, Uploads, Profile? → 1.2 mit allen Pflichtfunktionen.
    - Zielgruppe Kinder, Gesundheit, Finanzen, Glücksspiel, VPN, MDM? → jeweils die Sonderregeln.
    - Nur WebView? → 4.2 sofort prüfen, das ist ein K.-o.-Kriterium.
-4. **Schnellscan starten**: `scripts/schnellscan.py <projektpfad>` liefert in Sekunden eine Rohliste bekannter Muster (Private-API-Aufrufe, hartcodierte Secrets, externe Checkout-URLs, fehlende Purpose-Strings, Android-Verweise, Hintergrundmodi, OTA-Update-Konfiguration). Die Ausgabe ist ein Startpunkt, kein Urteil – jeder Treffer wird von dir im Kontext bewertet.
+4. **Schnellscan starten**: `scripts/schnellscan.py <projektpfad>` liefert in Sekunden eine Rohliste bekannter Muster (Private-API-Aufrufe, hartcodierte Secrets, externe Checkout-URLs, fehlende Purpose-Strings, nicht deklarierte Required-Reason-APIs, KI-Anbieter, Android-Verweise, Hintergrundmodi, OTA-Update-Konfiguration). Die Ausgabe ist ein Startpunkt, kein Urteil – jeder Treffer wird von dir im Kontext bewertet.
 
 ### Phase 2 – Module laden und prüfen
 
@@ -92,9 +93,10 @@ Schreibe auf Deutsch, in direkter Ansprache, ohne Floskeln. Code-Schnipsel in de
 
 Wenn das Team dir den Text einer Ablehnung gibt, arbeite so:
 
-1. Zitiere die genannte Guideline-Nummer und lies den passenden Abschnitt im Modul, bevor du den Code ansiehst. Apples Formulierungen sind knapp; das Modul erklärt, was der Gutachter wahrscheinlich gemeint hat.
-2. Finde die Fundstelle im Code oder in den Metadaten. Wenn du keine findest, sage das deutlich – häufig meint Apple etwas anderes, als das Team vermutet (z. B. den Paywall-Text statt der StoreKit-Implementierung).
-3. Schlage eine Behebung vor und formuliere zusätzlich einen Antwortvorschlag für das Resolution Center: sachlich, kurz, mit Verweis auf die konkrete Änderung im neuen Build. Wenn das Team die Ablehnung für falsch hält, formuliere die Argumentation entlang der Guideline-Wortwahl, nicht entlang des Codes.
+1. Unterscheide zuerst die Art: Eine Meldung „Guideline 2.1 – Information Needed" ist in der Praxis keine Regelverletzung, sondern eine Rückfrage. Sie wird im Resolution Center beantwortet; die Antworten gehören zusätzlich in die Review-Notizen, damit der nächste Gutachter sie sieht. Steht die Einreichung auf „Metadata Rejected", beanstandet Apple nur Metadaten (Name, Untertitel, Beschreibung, Keywords, Screenshots): Metadaten korrigieren und auf die Nachricht antworten, ein neuer Build ist dafür nicht nötig.
+2. Zitiere die genannte Guideline-Nummer und lies den passenden Abschnitt im Modul, bevor du den Code ansiehst. Apples Formulierungen sind knapp; das Modul erklärt, was der Gutachter wahrscheinlich gemeint hat.
+3. Finde die Fundstelle im Code oder in den Metadaten. Wenn du keine findest, sage das deutlich – häufig meint Apple etwas anderes, als das Team vermutet (z. B. den Paywall-Text statt der StoreKit-Implementierung).
+4. Schlage eine Behebung vor und formuliere zusätzlich einen Antwortvorschlag für das Resolution Center: sachlich, kurz, mit Verweis auf die konkrete Änderung im neuen Build. Wenn das Team die Ablehnung für falsch hält, formuliere die Argumentation entlang der Guideline-Wortwahl, nicht entlang des Codes.
 
 ## Was dieser Skill nicht tut
 

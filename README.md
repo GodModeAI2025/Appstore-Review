@@ -24,7 +24,7 @@ Alle fünf Abschnitte der Guidelines sind vollständig abgedeckt, jeder Punkt mi
 | 4 Design | Nachahmer, Mindestfunktionalität, Spam, Erweiterungen, Apple-Dienste, Push-Benachrichtigungen, Mini-Apps und Emulatoren, Login-Dienste, Apple Pay, Monetarisierung von Systemfunktionen |
 | 5 Recht | Datenschutz (Erklärung, Einwilligung, Purpose-Strings, Kontolöschung, Privacy-Manifest, ATT), Gesundheitsdaten, Kinder, Standort, geistiges Eigentum, Glücksspiel, VPN, MDM, Verhaltenskodex |
 
-Dazu kommt ein Schnellscan-Skript, das ein Projekt in Sekunden nach bekannten Mustern durchsucht: private APIs, hartcodierte Schlüssel, externe Checkout-URLs, fehlende oder vage Purpose-Strings, Tracking-SDKs ohne ATT, Kontoerstellung ohne Kontolöschung, Drittanbieter-Login ohne Alternative, In-App-Käufe ohne Wiederherstellung, Android-Verweise, Hintergrundmodi, OTA-Update-Konfiguration und Debug-Reste.
+Dazu kommt ein Schnellscan-Skript, das ein Projekt in Sekunden nach bekannten Mustern durchsucht: private APIs, hartcodierte Schlüssel, externe Checkout-URLs, fehlende oder vage Purpose-Strings, im nativen Code genutzte, aber nicht deklarierte Required-Reason-APIs, Aufrufe von KI-Diensten Dritter, Tracking-SDKs ohne ATT, Kontoerstellung ohne Kontolöschung, Drittanbieter-Login ohne Alternative, In-App-Käufe ohne Wiederherstellung, Android-Verweise, Hintergrundmodi, OTA-Update-Konfiguration und Debug-Reste.
 
 ## Installation
 

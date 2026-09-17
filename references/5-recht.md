@@ -528,7 +528,9 @@ React Native/Expo:
 
 **Kern der Regel** – Nutzerdaten dürfen ohne Einwilligung nicht an Dritte gehen, und zwar auch nicht in Form von Geräte-IDs. Wer Daten aus seiner App mit Daten aus anderen Apps oder Websites Dritter verknüpft (Tracking für Werbung oder Datenhandel), muss vorher den Systemdialog von App Tracking Transparency zeigen. Bei Ablehnung darf weder die IDFA gelesen noch ein anderes Identifikationsmerkmal (Fingerprinting, E-Mail-Hashes an Werbenetze) ersatzweise genutzt werden. Die App darf die Nutzung nicht von der Zustimmung abhängig machen und darf den Nutzer nicht mit Belohnungen dazu bewegen.
 
-**Risikostufe** – Kritisch. Apple prüft, ob Werbe-/Attributions-SDKs im Bundle sind, und lehnt ab, wenn kein ATT-Dialog erscheint oder wenn trotz Ablehnung Tracking-Endpunkte kontaktiert werden.
+**Drittanbieter-KI** – Seit der Überarbeitung vom 13. November 2025 steht in 5.1.2(i): „You must clearly disclose where personal data will be shared with third parties, including with third-party AI, and obtain explicit permission before doing so." Die App muss also offenlegen, welche Daten an welchen Anbieter gehen, und *vorher* ausdrücklich zustimmen lassen. Die Guideline sagt nicht, wo die Offenlegung stehen muss. Veröffentlichte Ablehnungen deuten aber darauf hin, dass ein Absatz in der Datenschutzerklärung nicht genügt – sicher ist ein Hinweis in der App vor dem ersten gesendeten Inhalt. In einem veröffentlichten Fall (September 2026) traf die Ablehnung auch eine App, in der Nutzer ihren eigenen API-Schlüssel eintrugen. Nach 5.1.1(i) muss die Datenschutzerklärung die Weitergabe an Dritte ohnehin abdecken. On-Device-Modelle wie Apples Foundation Models fallen nicht darunter, solange nichts das Gerät verlässt.
+
+**Risikostufe** – Kritisch. Apple prüft, ob Werbe-/Attributions-SDKs im Bundle sind, und lehnt ab, wenn kein ATT-Dialog erscheint oder wenn trotz Ablehnung Tracking-Endpunkte kontaktiert werden. Bei KI-Funktionen sind Ablehnungen dokumentiert, wenn Chat-Inhalte, Fotos oder Dokumente ohne vorherigen Hinweis und Zustimmung an einen Cloud-Anbieter gehen.
 
 **Woran du es im Code erkennst**
 
@@ -546,6 +548,11 @@ React Native/Expo:
 - IDFA: `expo-tracking-transparency` `getAdvertisingId()`, `react-native-idfa`, `react-native-device-info` `getUniqueId()` (das ist IDFV, kein Tracking, aber prüfen, wohin es geht).
 - SDKs: `react-native-fbsdk-next`, `react-native-adjust`, `react-native-appsflyer`, `react-native-branch`, `react-native-google-mobile-ads`, `@react-native-firebase/analytics`, `react-native-applovin-max`, `expo-ads-admob` (veraltet).
 - Fehlender Zusammenhang: `appsFlyer.initSdk()` in `App.tsx` ohne vorherigen ATT-Aufruf oder ohne `timeToWaitForATTUserAuthorization`.
+
+Drittanbieter-KI (beide Codebasen):
+- Endpunkte: `api.openai.com`, `api.anthropic.com`, `generativelanguage.googleapis.com`, `api.mistral.ai`, `api.groq.com`, `openrouter.ai`, `api.deepseek.com`, `api.perplexity.ai`; eigene Proxy-Backends, die Prompts weiterreichen.
+- SDKs: Swift `import OpenAI`, `GoogleGenerativeAI`, `FirebaseAI`/`FirebaseVertexAI`; JS `openai`, `@anthropic-ai/sdk`, `@google/genai`, `@google/generative-ai`, `firebase/ai`.
+- Fehlender Zusammenhang: der erste Aufruf (`chat.completions.create`, `messages.create`, `generateContent`) ist erreichbar, ohne dass vorher ein gespeicherter Einwilligungs-Status (`aiConsentGiven`, `@AppStorage`) geprüft wird.
 
 **Typische Verstöße**
 
@@ -578,6 +585,10 @@ useEffect(() => {
 
 ❌ Vorschalt-Screen: „Erlaube Tracking und erhalte 100 Münzen".
 
+❌ Chat-App sendet die erste Nachricht an OpenAI; erwähnt wird das nur in der Datenschutzerklärung.
+
+✅ Vor der ersten Anfrage ein Sheet: „Deine Nachricht und angehängte Bilder werden an OpenAI (USA) gesendet, um die Antwort zu erzeugen" mit „Erlauben" und „Nicht jetzt"; die Entscheidung wird gespeichert und ist in den Einstellungen widerrufbar.
+
 ❌ Bei Ablehnung: `deviceFingerprint = [bootTime, diskSpace, keyboards, locale].joined()` an das Attributions-Backend.
 
 **Prüfliste**
@@ -587,8 +598,9 @@ useEffect(() => {
 - [ ] Kein Anreiz, keine Blockade, kein wiederholtes Nachfragen (Systemdialog erscheint ohnehin nur einmal).
 - [ ] Nutrition Label in App Store Connect („Daten, die zum Tracking verwendet werden") stimmt mit Code überein.
 - [ ] `NSPrivacyTracking` und `NSPrivacyTrackingDomains` im Manifest gesetzt.
+- [ ] Gehen Inhalte an einen KI-Dienst Dritter: In-App-Hinweis mit Datenart und Anbietername vor dem ersten Senden, ausdrückliche Zustimmung, Widerruf möglich; Anbieter auch in der Datenschutzerklärung.
 
-**Empfohlene Behebung** – `expo-tracking-transparency` (Expo) oder `react-native-tracking-transparency` (bare); nativ `ATTrackingManager`. Attribution ohne ATT über SKAdNetwork 4 / AdAttributionKit (`SKAdNetworkItems` in `Info.plist`).
+**Empfohlene Behebung** – `expo-tracking-transparency` (Expo) oder `react-native-tracking-transparency` (bare); nativ `ATTrackingManager`. Attribution ohne ATT über SKAdNetwork 4 / AdAttributionKit (`SKAdNetworkItems` in `Info.plist`). Für KI-Dienste: Einwilligungs-Sheet vor dem ersten Aufruf, Status persistent speichern (`@AppStorage`, `expo-secure-store`/`AsyncStorage`), jeden Aufrufpfad über denselben Guard führen; in den Review-Notizen beschreiben, wo der Hinweis erscheint.
 
 ### Tabelle: Bekannte SDKs und ihre ATT-/Privacy-Manifest-Pflicht
 
