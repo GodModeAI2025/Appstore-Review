@@ -9,6 +9,11 @@ gibt eine Rohliste mit Fundstellen und Guideline-Bezug aus.
 Die Ausgabe ist ein Startpunkt für die eigentliche Prüfung – kein Urteil.
 Jeder Treffer muss im Kontext bewertet werden.
 
+Geheimnisse werden nicht ausgegeben: Bei Treffern auf Schlüssel, Tokens oder
+Passwörter nennt der Scan nur Fundstelle und Typ, nie den Wert. Zusätzlich
+werden bekannte Geheimnis-Schablonen in allen anderen Auszügen ersetzt, damit
+ein Schlüssel nicht über einen anderen Treffer in Bericht oder JSON landet.
+
 Aufruf:
     python3 scripts/schnellscan.py <projektpfad> [--json] [--max-treffer N]
 """
@@ -77,7 +82,41 @@ REQUIRED_REASON_APIS = {
     "NSPrivacyAccessedAPICategoryActiveKeyboards": r"\bactiveInputModes\b",
 }
 
+# Schablonen bekannter Geheimnisse. Sie dienen nicht der Erkennung, sondern der
+# Maskierung: Was hier greift, wird aus jedem Auszug entfernt, bevor er in die
+# Text- oder JSON-Ausgabe geht. Lieber eine Zeile zu viel unkenntlich als ein
+# Token im Prüfbericht, der anschließend per Chat, Ticket oder Datei weiterwandert.
+GEHEIMNIS_SCHABLONEN = [
+    re.compile(r"(sk|pk|rk)_(live|test)_[A-Za-z0-9]{8,}"),
+    re.compile(r"AKIA[0-9A-Z]{16}"),
+    re.compile(r"AIza[0-9A-Za-z\-_]{35}"),
+    re.compile(r"gh[pousr]_[A-Za-z0-9]{16,}"),
+    re.compile(r"xox[baprs]-[A-Za-z0-9-]{10,}"),
+    re.compile(r"eyJ[A-Za-z0-9_\-]{8,}\.[A-Za-z0-9_\-]{8,}\.[A-Za-z0-9_\-]{8,}"),
+    re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----"),
+    re.compile(r'''(api[_-]?key|secret|password|passwd|token|bearer)["']?\s*[:=]\s*\\?["']?[A-Za-z0-9_\-\./+=]{8,}''', re.IGNORECASE),
+]
+
+MASKE = "[Wert maskiert]"
+
+
+def maskieren(text: str) -> str:
+    """Ersetzt bekannte Geheimnis-Schablonen in einem Auszug durch einen Platzhalter."""
+    for rx in GEHEIMNIS_SCHABLONEN:
+        text = rx.sub(MASKE, text)
+    return text
+
+
+def auszug_bauen(zeile: str, geheim: bool) -> str:
+    """Auszug für die Ausgabe. Bei Geheimnis-Mustern bleibt er leer – Fundstelle und Typ genügen."""
+    if geheim:
+        return ""
+    return maskieren(zeile.strip())[:160]
+
+
 # Muster mit Guideline-Bezug. (regex, stufe, guideline, beschreibung, nur-in)
+# geheim=True: Der Treffer beschreibt ein Geheimnis. Dann wird kein Auszug gespeichert,
+# weil der Auszug genau den Wert enthielte, vor dem das Muster warnt.
 @dataclass
 class Muster:
     regex: str
@@ -86,6 +125,7 @@ class Muster:
     beschreibung: str
     endungen: set = field(default_factory=lambda: CODE_ENDUNGEN)
     flags: int = 0
+    geheim: bool = False
 
 MUSTER: list[Muster] = [
     # --- 2.5.1 Private APIs ---
@@ -104,13 +144,13 @@ MUSTER: list[Muster] = [
     Muster(r"expo-updates|Updates\.(checkForUpdateAsync|fetchUpdateAsync)", "mittel", "2.5.2", "expo-updates – OTA nur für Fehlerbehebungen, keine neuen Funktionen"),
 
     # --- 1.6 / 5.1 Secrets ---
-    Muster(r"(sk|pk)_(live|test)_[A-Za-z0-9]{8,}", "kritisch", "1.6", "Stripe-Schlüssel im Quellcode"),
-    Muster(r"AKIA[0-9A-Z]{16}", "kritisch", "1.6", "AWS Access Key im Quellcode"),
-    Muster(r"AIza[0-9A-Za-z\-_]{35}", "hoch", "1.6", "Google API Key im Quellcode – prüfen, ob eingeschränkt"),
-    Muster(r"(api[_-]?key|secret|password|passwd|token)\s*[:=]\s*[\"'][A-Za-z0-9_\-\.\/+=]{16,}[\"']", "hoch", "1.6", "Hartcodiertes Secret/Passwort/Token", flags=re.IGNORECASE),
-    Muster(r"EXPO_PUBLIC_[A-Z_]*(SECRET|PRIVATE|PASSWORD)", "hoch", "1.6", "EXPO_PUBLIC_-Variable mit Secret – landet im JS-Bundle"),
-    Muster(r"UserDefaults\.standard\.set\([^)]*(token|password|secret)", "hoch", "1.6", "Zugangsdaten in UserDefaults statt Keychain", flags=re.IGNORECASE),
-    Muster(r"AsyncStorage\.setItem\(\s*[\"'][^\"']*(token|password|secret)", "hoch", "1.6", "Zugangsdaten in AsyncStorage statt SecureStore/Keychain", flags=re.IGNORECASE),
+    Muster(r"(sk|pk)_(live|test)_[A-Za-z0-9]{8,}", "kritisch", "1.6", "Stripe-Schlüssel im Quellcode", geheim=True),
+    Muster(r"AKIA[0-9A-Z]{16}", "kritisch", "1.6", "AWS Access Key im Quellcode", geheim=True),
+    Muster(r"AIza[0-9A-Za-z\-_]{35}", "hoch", "1.6", "Google API Key im Quellcode – prüfen, ob eingeschränkt", geheim=True),
+    Muster(r"(api[_-]?key|secret|password|passwd|token)\s*[:=]\s*[\"'][A-Za-z0-9_\-\.\/+=]{16,}[\"']", "hoch", "1.6", "Hartcodiertes Secret/Passwort/Token", flags=re.IGNORECASE, geheim=True),
+    Muster(r"EXPO_PUBLIC_[A-Z_]*(SECRET|PRIVATE|PASSWORD)", "hoch", "1.6", "EXPO_PUBLIC_-Variable mit Secret – landet im JS-Bundle", geheim=True),
+    Muster(r"UserDefaults\.standard\.set\([^)]*(token|password|secret)", "hoch", "1.6", "Zugangsdaten in UserDefaults statt Keychain", flags=re.IGNORECASE, geheim=True),
+    Muster(r"AsyncStorage\.setItem\(\s*[\"'][^\"']*(token|password|secret)", "hoch", "1.6", "Zugangsdaten in AsyncStorage statt SecureStore/Keychain", flags=re.IGNORECASE, geheim=True),
     Muster(r"NSAllowsArbitraryLoads</key>\s*<true/>", "mittel", "1.6", "ATS global deaktiviert", endungen={".plist"}),
 
     # --- 3.1.1 Zahlungen ---
@@ -224,7 +264,8 @@ def scannen(wurzel: Path, max_treffer: int) -> tuple[list[Treffer], dict]:
                     schluessel = f"{m.guideline}|{m.beschreibung}"
                     zaehler[schluessel] = zaehler.get(schluessel, 0) + 1
                     if zaehler[schluessel] <= max_treffer:
-                        treffer.append(Treffer(m.stufe, m.guideline, m.beschreibung, rel, zeilen_nr, zeile.strip()[:160]))
+                        treffer.append(Treffer(m.stufe, m.guideline, m.beschreibung, rel, zeilen_nr,
+                                               auszug_bauen(zeile, m.geheim)))
 
     # Purpose-Strings: Framework genutzt, aber Schlüssel fehlt?
     alle_konfig = "\n".join(plist_texte + appjson_texte)
@@ -243,7 +284,8 @@ def scannen(wurzel: Path, max_treffer: int) -> tuple[list[Treffer], dict]:
                     wert = mm.group(2).strip()
                     generisch = re.search(r"(needs|benötigt|requires|access to|Zugriff auf|uses|verwendet)\s*(the\s*|your\s*|Ihre\s*|deine\s*)?(camera|kamera|photos?|fotos?|location|standort|microphone|mikrofon|contacts|kontakte)\s*(access|zugriff|library|roll)?\.?$", wert, re.IGNORECASE)
                     if len(wert) < 30 or generisch:
-                        treffer.append(Treffer("hoch", "5.1.1(iv)", f"Purpose-String für {key} ist zu vage: „{wert}“", "Info.plist/app.json", 0, wert[:160]))
+                        sicher = maskieren(wert)
+                        treffer.append(Treffer("hoch", "5.1.1(iv)", f"Purpose-String für {key} ist zu vage: „{sicher}“", "Info.plist/app.json", 0, sicher[:160]))
 
     for key in fehlende_purpose:
         treffer.append(Treffer("kritisch", "5.1.1(iv)", f"{key} fehlt, obwohl das zugehörige Framework/Paket genutzt wird", "Info.plist/app.json", 0, ""))
@@ -345,6 +387,8 @@ def ausgabe_text(treffer: list[Treffer], zusammenfassung: dict) -> str:
         for k, v in zusammenfassung["gekappte_muster"].items():
             zeilen.append(f"- {k}: {v} Treffer insgesamt")
     zeilen.append("\n---\nHinweis: Jeder Treffer ist ein Prüfauftrag, kein Urteil. Bewertung erfolgt im Kontext der Module.")
+    zeilen.append("Geheimnisse sind maskiert: Bei Schlüsseln, Tokens und Passwörtern stehen hier nur Fundstelle und Typ. "
+                  "Den Wert liest das Team in der Datei nach – und rotiert ihn, weil er im Repository stand.")
     return "\n".join(zeilen)
 
 

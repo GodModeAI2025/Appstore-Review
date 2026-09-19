@@ -162,7 +162,7 @@ footer p{margin:0 0 6px}
       </div>
       <div class="karte">
         <h3><span class="nr">2</span> Leistung</h3>
-        <p>Vollständigkeit, Betatests, Metadaten, Hardware-Kompatibilität, Mac-App-Store-Regeln, Software-Anforderungen: private APIs, nachgeladener Code, Hintergrundmodi, IPv6, Erweiterungen, Werbung.</p>
+        <p>Vollständigkeit, Archivprüfung des eingereichten Builds, Betatests, Metadaten, Hardware-Kompatibilität, Mac-App-Store-Regeln samt Erstinstallations- und Upgrade-Test, Software-Anforderungen: private APIs, nachgeladener Code, Hintergrundmodi, IPv6, Erweiterungen, Werbung.</p>
       </div>
       <div class="karte">
         <h3><span class="nr">3</span> Geschäft</h3>
@@ -174,11 +174,11 @@ footer p{margin:0 0 6px}
       </div>
       <div class="karte">
         <h3><span class="nr">5</span> Recht</h3>
-        <p>Datenschutzerklärung, Einwilligung, Purpose-Strings, Kontolöschung, Privacy-Manifest, ATT, Gesundheitsdaten, Kinder, Standort, geistiges Eigentum, Glücksspiel, VPN, MDM.</p>
+        <p>Datenschutzerklärung samt Inhaltsprüfung, Einwilligung, Purpose-Strings, Kontolöschung, Privacy-Manifest, ATT, Drittanbieter-KI in drei Fällen – fest eingebundener Anbieter, vom Nutzer konfigurierte Clients wie MCP, rein lokale Verarbeitung –, Gesundheitsdaten, Kinder, Standort, geistiges Eigentum, Glücksspiel, VPN, MDM.</p>
       </div>
       <div class="karte">
         <h3><span class="nr">+</span> Schnellscan</h3>
-        <p>Musterbasierter Rohscan in Python, ohne Abhängigkeiten. Findet private APIs, hartcodierte Schlüssel, externe Checkout-URLs, vage Purpose-Strings, nicht deklarierte Required-Reason-APIs, KI-Dienste Dritter, Tracking ohne ATT, Android-Verweise und Debug-Reste.</p>
+        <p>Musterbasierter Rohscan in Python, ohne Abhängigkeiten. Findet private APIs, hartcodierte Schlüssel, externe Checkout-URLs, vage Purpose-Strings, nicht deklarierte Required-Reason-APIs, KI-Dienste Dritter, Tracking ohne ATT, Android-Verweise und Debug-Reste. Gefundene Geheimnisse werden maskiert: ausgegeben werden nur Fundstelle und Typ.</p>
       </div>
     </div>
   </div>
@@ -261,6 +261,7 @@ footer p{margin:0 0 6px}
         <pre><span class="prompt">$</span> python3 scripts/schnellscan.py /pfad/zum/projekt
 <span class="prompt">$</span> python3 scripts/schnellscan.py /pfad/zum/projekt --json</pre>
         <p style="margin-top:14px">Im Ablauf des Skills läuft der Scan automatisch in Phase 1. Jeder Treffer wird anschließend im Kontext der Module bewertet – Stripe im Code ist zum Beispiel nur dann ein Befund, wenn der Kaufpfad digitale, in der App konsumierte Güter betrifft.</p>
+        <p style="margin-top:14px">Schlüssel, Tokens und Passwörter erscheinen nie im Klartext: Bei Geheimnis-Treffern stehen nur Fundstelle und Typ, und bekannte Geheimnis-Schablonen werden auch aus allen übrigen Auszügen entfernt – in der Textausgabe wie im JSON.</p>
       </div>
       <div>
         <h3>Ausgabe</h3>
@@ -269,6 +270,8 @@ footer p{margin:0 0 6px}
 Dateien gescannt: 3
 
 <span class="kom">## Hoch</span>
+- [1.6] Hartcodiertes Secret/Passwort/Token
+  <span class="pfad">App/Config.swift:5</span>
 - [3.1.1] Externe Checkout-URL – kritisch,
   falls digitale Güter betroffen
   <span class="pfad">App/Kauf.tsx:3</span>

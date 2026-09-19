@@ -7,7 +7,7 @@ Abschnitt 1 bündelt alles, was Apple unter „Nutzer vor Schaden bewahren" fass
 
 ## Wo Apple aktuell besonders genau hinschaut
 
-1. **UGC ohne Melde- und Blockierfunktion (1.2)** – jede App mit Chat, Kommentaren, Profilen oder Uploads ohne sichtbare „Melden"/„Blockieren"-Aktion wird nahezu sicher abgelehnt.
+1. **UGC ohne Melde- und Blockierfunktion (1.2)** – bei Apps mit Chat, Kommentaren, Profilen oder Uploads zählt 1.2 die Melde- und Blockierfunktion ausdrücklich zu den Pflichtfunktionen; fehlt die sichtbare „Melden"/„Blockieren"-Aktion, ist das Ablehnungsrisiko sehr hoch.
 2. **Kids-Kategorie mit Werbe-/Analytics-SDKs (1.3)** – Standard-SDKs von Firebase, Facebook, AppLovin und Co. im Bundle einer Kids-App führen zur Ablehnung, auch wenn sie „nicht aktiv" sind.
 3. **Gesundheitsversprechen über Sensoren (1.4.1)** – Blutdruck, Blutzucker, Sauerstoffsättigung oder Temperatur „nur mit Kamera/Taschenlampe" gemessen: Ablehnung ohne Nachweis.
 4. **Scherz- und Täuschungsfunktionen (1.1.6)** – Fake-Anrufe, Fake-Virenwarnungen, gefälschte Systemdialoge und KI-generierte Inhalte, die als echt ausgegeben werden.

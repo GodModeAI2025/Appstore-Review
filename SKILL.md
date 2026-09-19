@@ -4,7 +4,7 @@ description: Prüft App-Code und App-Store-Metadaten gegen Apples App Review Gui
 license: MIT
 metadata:
   author: Mark Zimmermann
-  version: "1.1.0"
+  version: "1.2.0"
   stand: "App Review Guidelines vom 8. Juni 2026, geprüft September 2026"
 ---
 
@@ -19,7 +19,9 @@ Codebasen: Swift/SwiftUI, Objective-C, React Native (bare), Expo.
 
 Apples Gutachter lesen keinen Quellcode. Sie starten die App, klicken sich durch, lesen Info.plist, Entitlements, Privacy-Manifest und die Metadaten in App Store Connect. Alles, was du im Code findest, ist deshalb nur dann ein echtes Risiko, wenn es sich im Verhalten oder in den Metadaten zeigt. Formuliere Befunde immer aus der Sicht dessen, was der Gutachter *sieht*, nicht aus der Sicht der Codezeile. Das verhindert Fehlalarme und macht jeden Befund für das Team nachvollziehbar.
 
-Zweiter Grundsatz: Ein Bericht mit 80 gleichgewichteten Punkten wird nicht gelesen. Trenne hart zwischen „führt sicher zur Ablehnung", „führt wahrscheinlich zur Ablehnung" und „Schönheitsfehler". Lieber fünf gut begründete kritische Befunde als vierzig Hinweise.
+Zweiter Grundsatz: Ein Bericht mit 80 gleichgewichteten Punkten wird nicht gelesen. Trenne hart zwischen hohem, wahrscheinlichem und geringem Ablehnungsrisiko. Lieber fünf gut begründete kritische Befunde als vierzig Hinweise.
+
+Dritter Grundsatz: Sage dazu, worauf jede Aussage beruht. Gelesener Code belegt nicht, wie sich die gebaute App verhält; ein bestandener Schnellscan belegt keine Einreichbarkeit; eine eingereichte Korrektur belegt keine Zustimmung von Apple. Die Nachweisstufen in [references/befund-vorlage.md](references/befund-vorlage.md) sind dafür verbindlich. Was nicht geprüft werden konnte, wird offengelassen – nicht weggelassen und nicht geschätzt.
 
 ## Ablauf
 
@@ -33,11 +35,12 @@ Bevor du Regeln anwendest, stelle fest, womit du es zu tun hast. Das entscheidet
    - Gibt es Zahlungen, Abos, virtuelle Währungen, Spenden? → Modul 3 wird Pflicht mit voller Tiefe.
    - Gibt es Konten, Login, Drittanbieter-Login? → 5.1.1(v) und 4.8.
    - Gibt es Analytics-, Werbe- oder Attributions-SDKs? → ATT, Privacy-Manifest, 5.1.2.
-   - Gehen Nutzerinhalte an einen KI-Dienst Dritter (OpenAI, Anthropic, Gemini …)? → 5.1.2(i): Offenlegung und Zustimmung in der App, nicht nur in der Datenschutzerklärung.
+   - Gehen Nutzerinhalte an einen KI-Dienst? → 5.1.2(i). Unterscheide dort drei Fälle: (A) fest eingebundener Anbieter (OpenAI, Anthropic, Gemini …), (B) vom Nutzer konfigurierte Clients – eigener API-Schlüssel, eigene Basis-URL, MCP-Server –, (C) ausschließlich lokale Verarbeitung. Offenlegung und Zustimmung gehören in die App, nicht nur in die Datenschutzerklärung; „bleibt lokal" darfst du erst schreiben, wenn du jeden Aufrufpfad geprüft hast.
    - Gibt es Chat, Kommentare, Uploads, Profile? → 1.2 mit allen Pflichtfunktionen.
    - Zielgruppe Kinder, Gesundheit, Finanzen, Glücksspiel, VPN, MDM? → jeweils die Sonderregeln.
    - Nur WebView? → 4.2 sofort prüfen, das ist ein K.-o.-Kriterium.
-4. **Schnellscan starten**: `scripts/schnellscan.py <projektpfad>` liefert in Sekunden eine Rohliste bekannter Muster (Private-API-Aufrufe, hartcodierte Secrets, externe Checkout-URLs, fehlende Purpose-Strings, nicht deklarierte Required-Reason-APIs, KI-Anbieter, Android-Verweise, Hintergrundmodi, OTA-Update-Konfiguration). Die Ausgabe ist ein Startpunkt, kein Urteil – jeder Treffer wird von dir im Kontext bewertet.
+4. **Schnellscan starten**: `scripts/schnellscan.py <projektpfad>` liefert in Sekunden eine Rohliste bekannter Muster (Private-API-Aufrufe, hartcodierte Secrets, externe Checkout-URLs, fehlende Purpose-Strings, nicht deklarierte Required-Reason-APIs, KI-Anbieter, Android-Verweise, Hintergrundmodi, OTA-Update-Konfiguration). Die Ausgabe ist ein Startpunkt, kein Urteil – jeder Treffer wird von dir im Kontext bewertet. Bei Geheimnis-Treffern gibt der Scan bewusst nur Fundstelle und Typ aus; den Wert liest das Team in der Datei nach. Übernimm ihn auch nicht selbst in den Bericht – ein Schlüssel, der im Repository stand, gehört rotiert, nicht weitergereicht.
+5. **Fehlende Artefakte anfordern, statt sie zu ersetzen**: Frage nach dem Archiv (`.xcarchive`/`.ipa`/`.app`), den Store-Metadaten und der Datenschutz-URL. Was du nicht bekommst, prüfst du nicht – es wird als offene Frage geführt und schlägt in der Ampel auf ⚪️ „nicht beurteilbar" durch, statt aus dem Code hochgerechnet zu werden.
 
 ### Phase 2 – Module laden und prüfen
 
@@ -59,18 +62,21 @@ Ordne jeden Befund einer Stufe zu. Die Stufe beschreibt, was passiert, wenn niem
 
 | Stufe | Bedeutung | Beispiele |
 |---|---|---|
-| 🔴 Kritisch | Ablehnung ist sicher oder das Konto ist gefährdet | Digitale Güter an StoreKit vorbei, private APIs, nachgeladener ausführbarer Code, fehlende Datenschutzerklärung, Tracking ohne ATT, Kontolöschung fehlt |
-| 🟠 Hoch | Ablehnung ist wahrscheinlich, Gutachter stoßen regelmäßig darauf | Drittanbieter-Login ohne 4.8-konforme Alternative, UGC ohne Melden/Blockieren, WebView-Wrapper, vage Purpose-Strings, Abo-Paywall ohne Preis/Laufzeit, eigener Bewertungsdialog |
+| 🔴 Kritisch | Die Guideline verlangt es ausdrücklich, Apple beanstandet es dokumentiert – sehr hohes Ablehnungsrisiko, teils mit Risiko für das Entwicklerkonto | Digitale Güter an StoreKit vorbei, private APIs, nachgeladener ausführbarer Code, fehlende Datenschutzerklärung, Tracking ohne ATT, Kontolöschung fehlt |
+| 🟠 Hoch | Gutachter stoßen regelmäßig darauf, Ablehnung ist wahrscheinlich | Drittanbieter-Login ohne 4.8-konforme Alternative, UGC ohne Melden/Blockieren, WebView-Wrapper, vage Purpose-Strings, Abo-Paywall ohne Preis/Laufzeit, eigener Bewertungsdialog |
 | 🟡 Mittel | Kann zur Ablehnung führen, hängt vom Gutachter und Kontext ab | Android-Verweise, unbegründete Hintergrundmodi, `console.log` in Produktion, Push-Prompt beim ersten Start, Werbung im Widget |
 | 🔵 Hinweis | Kein Ablehnungsgrund, aber Nacharbeit vor Release sinnvoll | Veraltete Pakete, fehlende Review-Notizen, Screenshots ohne Gerätegrößen |
 
 Ein Befund gehört nur in den Bericht, wenn du eine konkrete Fundstelle (Datei und Zeile, Plist-Schlüssel, Komponente) oder eine konkrete fehlende Stelle („kein Aufruf von `AppStore.sync()` im gesamten Projekt") benennen kannst. Vermutungen ohne Fundstelle wandern in den Abschnitt „Offene Fragen an das Team".
 
+Die Stufe beschreibt ein Risiko, keine Gewissheit. Formuliere sie auch so: „Apple beanstandet das regelmäßig nach 5.1.1(v)" statt „Ablehnung ist sicher", „wird ohne Diskussion abgelehnt" oder „Apple akzeptiert das". Vorhersagen über die Entscheidung eines Gutachters sind kein Befund. Und: Keine Befunde in einem Bereich heißt nur, dass dort auf der genannten Nachweisstufe nichts gefunden wurde – nicht, dass die App einreichbar ist. Wenn Archiv, Store-Metadaten oder Datenschutzseite nicht vorlagen, lautet die Ampel ⚪️ „nicht beurteilbar", nicht 🟢.
+
 ### Phase 4 – Bericht schreiben
 
 Verwende die Vorlage in [references/befund-vorlage.md](references/befund-vorlage.md). Sie ist verbindlich, damit Berichte über Projekte hinweg vergleichbar bleiben. Kurzfassung der Struktur:
 
-1. **Freigabe-Ampel** – ein Satz: einreichbar / einreichbar nach Behebung der kritischen Punkte / nicht einreichbar.
+0. **Nachweisstufen** – die Legende (C · T · A · N · AP) und welche davon dieser Bericht tatsächlich abdeckt.
+1. **Freigabe-Ampel** – ein Satz: einreichbar / einreichbar nach Behebung der kritischen Punkte / nicht beurteilbar / nicht einreichbar.
 2. **Kritische und hohe Befunde** – je Befund: Guideline-Nummer, was der Gutachter sieht, Fundstelle, Behebung mit konkreter API oder konkretem Paket, geschätzter Aufwand.
 3. **Mittlere Befunde und Hinweise** – kompakt, tabellarisch.
 4. **Was bereits gut gelöst ist** – drei bis fünf Punkte. Das ist kein Höflichkeitsblock: Das Team soll wissen, was es beim Beheben nicht kaputt machen darf.
@@ -91,18 +97,37 @@ Schreibe auf Deutsch, in direkter Ansprache, ohne Floskeln. Code-Schnipsel in de
 
 ## Nach einer Ablehnung durch Apple
 
-Wenn das Team dir den Text einer Ablehnung gibt, arbeite so:
+### Verbindlicher Ablauf: die Ablehnung vollständig erfassen
+
+Bevor du irgendetwas bewertest, musst du die Ablehnung vollständig gelesen haben. Apple schreibt im Resolution Center selten alles in die erste sichtbare Nachricht, und die entscheidenden Angaben stehen regelmäßig in Anhängen. Ein Bericht, der auf einem Ausschnitt beruht, behebt den falschen Punkt und kostet eine weitere Review-Runde. Diese Schritte sind Pflicht, nicht optional:
+
+1. **Alle Nachrichten aufklappen.** Der Thread wird zusammengefaltet dargestellt. Jede eingeklappte Nachricht, jedes „Show more", jede ältere Runde wird geöffnet und gelesen – auch die eigenen Antworten, weil Apple sich darauf bezieht.
+2. **Jede Anlage ansehen.** Screenshots, Bildschirmaufnahmen und Logs sind oft der einzige Ort, an dem der beanstandete Bildschirm zu sehen ist. Öffne jedes Bild einzeln und beschreibe, was darauf zu sehen ist: welcher Screen, welcher Dialog, welcher Text, welches Gerät. Ist eine Anlage nicht zugänglich, vermerke das ausdrücklich – nicht überspringen.
+3. **Betroffenen Build feststellen.** Version und Buildnummer aus der Nachricht mit dem Archiv abgleichen (siehe Archivprüfung in [references/2-leistung.md](references/2-leistung.md)). Häufig bezieht sich die Ablehnung auf einen älteren Build als den, den das Team gerade baut.
+4. **Jede Frage von Apple einzeln beantworten.** Apple stellt oft mehrere Fragen in einem Absatz. Zerlege den Text in einzelne Fragen und Beanstandungen und beantworte jede für sich. Eine unbeantwortete Frage führt zuverlässig zur nächsten Ablehnungsrunde, auch wenn alle anderen Punkte erledigt sind.
+5. **Ergebnis in die Tabelle eintragen.** Erst wenn jede Zeile gefüllt ist, ist die Auswertung fertig:
+
+| Beanstandung | Änderung | Build | Nachweis | Antwort an Apple |
+|---|---|---|---|---|
+| {Guideline-Nummer und Apples Wortlaut, verkürzt} | {was konkret geändert wurde, oder: nichts – mit Begründung} | {Version + Buildnummer, in dem die Änderung steckt} | {Nachweisstufe C/T/A/N/AP und woran man es sieht} | {ein bis drei Sätze für das Resolution Center} |
+
+Leere Felder sind selbst ein Befund: Eine Beanstandung ohne Änderung braucht eine Begründung, eine Änderung ohne Build ist noch nicht eingereicht, ein fehlender Nachweis heißt, dass niemand geprüft hat, ob die Änderung wirkt.
+
+### Dann inhaltlich arbeiten
 
 1. Unterscheide zuerst die Art: Eine Meldung „Guideline 2.1 – Information Needed" ist in der Praxis keine Regelverletzung, sondern eine Rückfrage. Sie wird im Resolution Center beantwortet; die Antworten gehören zusätzlich in die Review-Notizen, damit der nächste Gutachter sie sieht. Steht die Einreichung auf „Metadata Rejected", beanstandet Apple nur Metadaten (Name, Untertitel, Beschreibung, Keywords, Screenshots): Metadaten korrigieren und auf die Nachricht antworten, ein neuer Build ist dafür nicht nötig.
 2. Zitiere die genannte Guideline-Nummer und lies den passenden Abschnitt im Modul, bevor du den Code ansiehst. Apples Formulierungen sind knapp; das Modul erklärt, was der Gutachter wahrscheinlich gemeint hat.
 3. Finde die Fundstelle im Code oder in den Metadaten. Wenn du keine findest, sage das deutlich – häufig meint Apple etwas anderes, als das Team vermutet (z. B. den Paywall-Text statt der StoreKit-Implementierung).
 4. Schlage eine Behebung vor und formuliere zusätzlich einen Antwortvorschlag für das Resolution Center: sachlich, kurz, mit Verweis auf die konkrete Änderung im neuen Build. Wenn das Team die Ablehnung für falsch hält, formuliere die Argumentation entlang der Guideline-Wortwahl, nicht entlang des Codes.
+5. Halte den Stand ehrlich fest. Eine Korrektur, die eingereicht, aber von Apple noch nicht beschieden ist, ist eine **eingereichte Korrektur mit offener Antwort** – keine bewährte und keine von Apple akzeptierte Lösung. Erst eine tatsächliche Entscheidung von Apple (Nachweisstufe AP) rechtfertigt eine andere Formulierung, und auch sie gilt nur für diesen Fall.
 
 ## Was dieser Skill nicht tut
 
 - Er ersetzt keine Rechtsberatung zu DSGVO, COPPA, Finanz- oder Glücksspielrecht. Wo er auf solche Pflichten stößt, markiert er sie als offene Frage.
 - Er prüft kein Design gegen die Human Interface Guidelines. Dafür ist ein eigener Skill zuständig; hier zählt nur, was zur Ablehnung führt.
 - Er kann Metadaten in App Store Connect nicht sehen. Bitte das Team um Beschreibung, Screenshots, Altersfreigabe-Fragebogen und Review-Notizen, wenn Modul 2.3 geprüft werden soll.
+- Er startet die App nicht. Erststart, Upgrade, verweigerte Freigaben und Schlüsselbundwechsel muss jemand tatsächlich durchspielen (Ablauf in [references/2-leistung.md](references/2-leistung.md)); der Skill liefert dafür die Schrittfolge, nicht das Ergebnis.
+- Er öffnet keine Datenschutzseite und kein Archiv von sich aus. Liegen sie nicht vor, bleiben die zugehörigen Punkte offen.
 
 ## Dateien dieses Skills
 

@@ -11,15 +11,15 @@ Abschnitt 2 ist der „handwerkliche" Teil der Guidelines: Ist die App fertig, l
 2. **2.5.1 Private APIs** – die automatische Vorprüfung beim Upload erkennt Selektoren, Symbole und Framework-Pfade zuverlässig. Besonders Drittanbieter-SDKs und ältere React-Native-Libraries schleppen private Aufrufe ein.
 3. **2.5.2 Nachgeladener Code** – OTA-Update-Mechanismen (expo-updates, CodePush) werden geduldet, solange sie nur Fehler beheben und den Charakter der App nicht verändern. Wer über OTA neue Funktionen ausrollt, riskiert die Sperre des Entwicklerkontos.
 4. **2.3.6 Altersfreigabe** – der 2025 erweiterte Fragebogen (Stufen 4+, 9+, 13+, 16+, 18+) hat 2026 zusätzliche Fragen zu Social-Media-Funktionen bekommen; ab September 2026 sind sie Pflicht für jede neue Einreichung. Falsche Antworten führen zu Metadaten-Ablehnungen, bei Kinder-Apps zur Entfernung.
-5. **2.5.4 Hintergrundmodi** – jeder Eintrag in `UIBackgroundModes` muss durch eine sichtbare Funktion begründet sein. Ein `audio`-Modus „für später" oder `location` ohne Standort-Feature ist ein sicheres Ablehnungskriterium.
-6. **2.3.10 Plattformverweise** – Screenshots, Beschreibungen und auch In-App-Texte, die Android, Google Play oder alternative Stores erwähnen, werden ohne Diskussion zurückgewiesen.
+5. **2.5.4 Hintergrundmodi** – jeder Eintrag in `UIBackgroundModes` muss durch eine sichtbare Funktion begründet sein. Ein `audio`-Modus „für später" oder `location` ohne Standort-Feature wird im Review regelmäßig beanstandet – hohes Ablehnungsrisiko.
+6. **2.3.10 Plattformverweise** – Screenshots, Beschreibungen und auch In-App-Texte, die Android, Google Play oder alternative Stores erwähnen, werden regelmäßig beanstandet; die Guideline verlangt den Plattformfokus ausdrücklich, deshalb ist das Ablehnungsrisiko hoch und die Behebung billig.
 
 ## Inhalt
 
-- **2.1 Vollständigkeit** – [2.1(a)](#21a-finale-version-stabilität-demo-zugang) · [2.1(b)](#21b-in-app-käufe-müssen-im-review-funktionieren)
+- **2.1 Vollständigkeit** – [2.1(a)](#21a-finale-version-stabilität-demo-zugang) · [2.1(b)](#21b-in-app-käufe-müssen-im-review-funktionieren) · [Archivprüfung](#archivprüfung-was-im-eingereichten-build-tatsächlich-steckt)
 - **2.2** – [Betatests](#22-betatests)
 - **2.3 Metadaten** – [2.3.1(a)](#231a-verborgene-funktionen) · [2.3.1(b)](#231b-grobes-fehlverhalten) · [2.3.2](#232-iap-angaben-in-der-beschreibung) · [2.3.3](#233-screenshots) · [2.3.4](#234-app-vorschauen) · [2.3.5](#235-kategorie) · [2.3.6](#236-altersfreigabe) · [2.3.7](#237-name-keywords-metadaten-integrität) · [2.3.8](#238-altersgerechte-metadaten) · [2.3.9](#239-rechte-an-metadaten) · [2.3.10](#2310-plattformfokus) · [2.3.11](#2311-vorbestellungen) · [2.3.12](#2312-neue-funktionen-text) · [2.3.13](#2313-in-app-events)
-- **2.4 Hardware** – [2.4.1](#241-iphone-apps-auf-dem-ipad) · [2.4.2](#242-energieeffizienz-und-gerätebelastung) · [2.4.3](#243-apple-tv-eingaben) · [2.4.4](#244-kein-neustart-keine-systemeinstellungs-manipulation) · [2.4.5](#245-mac-app-store)
+- **2.4 Hardware** – [2.4.1](#241-iphone-apps-auf-dem-ipad) · [2.4.2](#242-energieeffizienz-und-gerätebelastung) · [2.4.3](#243-apple-tv-eingaben) · [2.4.4](#244-kein-neustart-keine-systemeinstellungs-manipulation) · [2.4.5](#245-mac-app-store) · [macOS-Installationstest](#macos-erstinstallations--und-upgrade-test)
 - **2.5 Software** – [2.5.1](#251-nur-öffentliche-apis-aktuelle-sdks) · [2.5.2](#252-in-sich-geschlossene-bundles-kein-nachladen-von-code) · [2.5.3](#253-schadcode) · [2.5.4](#254-hintergrundmodi-nur-bei-echtem-bedarf) · [2.5.5](#255-ipv6-only) · [2.5.6](#256-browser-müssen-webkit-nutzen) · [2.5.7](#257-entfällt) · [2.5.8](#258-keine-alternativen-home-screens-oder-desktops) · [2.5.9](#259-keine-manipulation-von-standard-ui-elementen) · [2.5.10](#2510-entfällt) · [2.5.11](#2511-sirikit-und-shortcuts) · [2.5.12](#2512-callkit-sms-filter-spam-erkennung) · [2.5.13](#2513-gesichtserkennung) · [2.5.14](#2514-aufzeichnung-von-nutzeraktivität) · [2.5.15](#2515-dateiauswahl-über-system-picker) · [2.5.16](#2516-widgets-erweiterungen-benachrichtigungen-app-clips) · [2.5.17](#2517-matter-unterstützung) · [2.5.18](#2518-display-werbung)
 - [Paketreferenz React Native / Expo](#paketreferenz-react-native--expo) · [Kurz-Prüfliste](#kurz-prüfliste-für-diesen-abschnitt)
 
@@ -117,6 +117,44 @@ let ids = ["com.firma.app.pro_monthly"]   // in ASC heißt es "pro.monthly"
 - [ ] Paywall zeigt auch ohne Netzwerk-Cache Produkte an (Offering-Fallback)
 
 **Empfohlene Behebung** – StoreKit 2 mit `Transaction.currentEntitlements`; Expo/RN: `react-native-purchases` (RevenueCat) oder `react-native-iap` mit `StoreKit`-Testkonfiguration in Xcode.
+
+### Archivprüfung: Was im eingereichten Build tatsächlich steckt
+
+**Warum das ein eigener Schritt ist** – Der Quellcode sagt, was gebaut werden *soll*. Eingereicht wird aber ein Archiv, und zwischen beidem liegen Build-Settings, Schemes, xcconfig-Dateien, Config-Plugins und CI-Profile. Eine Prüfung, die nur den Code gelesen hat, kann über die eingereichte Fassung nichts Belastbares sagen. Wenn dir das Archiv (`.xcarchive`, `.ipa`, `.app`) oder der App-Store-Connect-Eintrag nicht vorliegt, ist das kein Befund – es ist eine offene Frage, und der Bericht muss sie als solche ausweisen, statt aus dem Code auf den Build zu schließen.
+
+**Was du aus dem Archiv liest**
+
+| Prüfpunkt | Wo es steht | Worauf du achtest |
+|---|---|---|
+| Bundle-ID | `Info.plist` → `CFBundleIdentifier` | Stimmt mit dem App-Store-Connect-Eintrag überein; keine `-dev`/`-staging`-Variante |
+| Version | `CFBundleShortVersionString` | Höher als die letzte veröffentlichte Version; keine Vorabkennzeichnung wie `-beta.3` (siehe 2.2) |
+| Buildnummer | `CFBundleVersion` | Für diese Version noch nicht hochgeladen; monoton steigend |
+| Build-Werkzeug | `DTXcodeBuild`, `DTXcode`, `DTSDKName`, `DTPlatformVersion`, `MinimumOSVersion` | Xcode- und SDK-Stand erfüllen die aktuelle Mindestanforderung (siehe 2.5.1); der Build stammt nicht aus einer veralteten CI-Umgebung |
+| Signierte Entitlements | `codesign -d --entitlements :- <App>` | Was tatsächlich signiert wurde, nicht was in der `.entitlements`-Datei steht: Sandbox (macOS), App Groups, Push, Associated Domains, alles ohne zugehörige Funktion ist erklärungsbedürftig |
+| Eingebettete Privacy-Manifeste | `PrivacyInfo.xcprivacy` im App-Bundle **und** in jedem `Frameworks/*.framework` | Jedes manifestpflichtige SDK bringt seines mit; die Required-Reason-Gründe decken die tatsächliche Nutzung ab (siehe 5.1.1) |
+| Enthaltene Targets | `PlugIns/`, `Watch/`, `Extensions/` | Jede Extension ist mitgeprüft (siehe 4.4); keine vergessenen Debug- oder Test-Targets |
+
+```bash
+# Kurzinventar eines Archivs oder einer .app – alle Werte, die oben in der Tabelle stehen
+plutil -p "<App>.app/Info.plist" | grep -E "CFBundleIdentifier|CFBundleShortVersionString|CFBundleVersion|DTXcodeBuild|DTXcode|DTSDKName|MinimumOSVersion"
+codesign -d --entitlements :- "<App>.app" 2>/dev/null
+find "<App>.app" -name "PrivacyInfo.xcprivacy"
+```
+
+**Was ein erfolgreicher Upload nicht beweist** – Dass ein Build in App Store Connect angekommen ist und in TestFlight läuft, belegt nur, dass er die automatischen Upload-Prüfungen bestanden hat. Es belegt nicht, dass er einreichbar ist: Metadaten, Altersfreigabe, IAP-Zuordnung, Privacy-Angaben und das gesamte manuelle Review stehen danach noch aus. Schreibe in keinen Bericht „läuft in TestFlight, also einreichbar". Umgekehrt gilt: Ein Upload-Fehler wie ITMS-91053 ist ein harter Befund, weil er die Einreichung technisch blockiert.
+
+**Keine pauschale „nur Stable"-Forderung** – Ein Build muss nicht mit einer finalen Xcode-Version erzeugt sein. Apple lässt für Einreichungen auch geeignete Release Candidates zu; welche Fassungen aktuell zulässig sind, steht bei [Apple zu Beta-Software und Release Candidates](https://developer.apple.com/support/install-beta). Ein Befund entsteht erst, wenn die verwendete Fassung die geltende SDK-Mindestanforderung nicht erfüllt oder ausdrücklich nicht für Einreichungen freigegeben ist – nicht, weil im Namen „RC" oder „beta" steht. Prüfe den konkreten Stand, statt eine Regel zu erfinden.
+
+**Prüfliste**
+- [ ] Bundle-ID, Version und Buildnummer des Archivs stimmen mit dem vorgesehenen App-Store-Connect-Eintrag überein
+- [ ] `DTXcodeBuild`/`DTSDKName` erfüllen die aktuelle SDK-Mindestanforderung (2.5.1)
+- [ ] Signierte Entitlements geprüft (`codesign -d --entitlements :-`), jedes hat eine Funktion
+- [ ] Privacy-Manifeste im App-Bundle und in allen eingebetteten Frameworks vorhanden und inhaltlich passend
+- [ ] Alle enthaltenen Extensions/Targets sind mitgeprüft
+- [ ] Upload-Erfolg oder TestFlight-Verfügbarkeit wird im Bericht nicht als Einreichbarkeit ausgegeben
+- [ ] Lag kein Archiv vor: als offene Frage im Bericht vermerkt, keine Aussage über den Build
+
+**Empfohlene Behebung** – Vor der Einreichung ein Inventar des Archivs ziehen (Befehle oben) und die Werte gegen App Store Connect abgleichen; bei Expo zusätzlich das von `eas build` verwendete Profil prüfen, damit nicht das `preview`-Profil eingereicht wird.
 
 ---
 
@@ -626,6 +664,36 @@ try? SMAppService.mainApp.register()   // beim ersten Start
 - [ ] (ix) Alle Sprachen im Bundle
 
 **Empfohlene Behebung** – Getrennte Targets für Store und Direktvertrieb (Sparkle/Lizenzierung nur im Direkt-Target); `SMAppService` mit Nutzer-Opt-in; Sandbox-Entitlements minimal und dokumentiert.
+
+### macOS-Erstinstallations- und Upgrade-Test
+
+**Warum dieser Test eigens vorkommt** – Der Gutachter sieht die App zum ersten Mal, auf einem Rechner, auf dem sie nie lief, und ohne den Schlüsselbund, die TCC-Freigaben und die Einstellungen, die auf dem Entwicklungsrechner längst existieren. Die meisten macOS-Ablehnungen nach 2.1 entstehen genau dort: Die App läuft beim Entwickler seit Monaten und stürzt beim Erststart ab, zeigt einen leeren Zustand oder hängt in einer Freigabeschleife. Dieser Test lässt sich nicht aus dem Code ableiten; er muss gelaufen sein, und der Bericht darf ihn nur dann als bestanden führen, wenn jemand ihn tatsächlich durchgeführt hat.
+
+**Der Durchlauf**
+
+1. **Frisches Benutzerkonto** auf dem Mac anlegen (nicht nur eine neue App-Kopie) – kein vorhandener Schlüsselbundeintrag, keine erteilte TCC-Freigabe, keine `~/Library`-Reste.
+2. **Erststart beobachten**: Was passiert vor der ersten Freigabe? Gibt es einen sinnvollen leeren Zustand statt eines Absturzes oder einer weißen Fläche?
+3. **Langsame Einrichtung**: Die Dialoge nicht durchklicken, sondern Pausen lassen und zwischendurch in eine andere App wechseln. Race Conditions beim Laden von Konfiguration, Lizenz oder Schlüsselbund zeigen sich nur so.
+4. **Freigaben verweigern**: Jede optionale Freigabe (Kontakte, Kalender, Ordner, Bildschirmaufnahme, Automatisierung) einmal ablehnen. Die Kernfunktion muss nutzbar bleiben, die Anzeige den tatsächlichen Status abbilden (siehe 5.1.1(iv)).
+5. **Neustart**: Rechner neu starten und die App erneut öffnen. Bleiben Anmeldung und Zustand erhalten? Stimmt die Statusanzeige noch?
+6. **Schlüsselbundwechsel**: Schlüsselbund sperren, Passwort ändern, Eintrag löschen. Die App muss das erkennen und einen Weg zur Neuanmeldung anbieten, statt stumm fehlzuschlagen.
+7. **Upgrade-Pfad**: Die zuvor veröffentlichte Version installieren, benutzen, dann auf den neuen Build aktualisieren. Migrationen von Datenbank, Einstellungen und Schlüsselbund laufen genau hier – nicht bei der Neuinstallation.
+
+**Drei Verteilwege, drei Ergebnisse** – Ein selbst signierter Entwicklungs-Build, ein mit Developer ID signierter und notarisierter Build und ein TestFlight-Build verhalten sich unterschiedlich: Sandbox, Gatekeeper, TCC-Zuordnung (sie hängt an Bundle-ID und Signatur) und Receipt-Pfad sind jeweils andere. Ein grüner Durchlauf mit der Entwicklungsversion sagt nichts über den Store-Build. Halte im Bericht fest, welche Fassung getestet wurde, und übertrage das Ergebnis nicht auf die anderen.
+
+**Was beim Testen nicht passieren darf** – Wenn ein Schritt fehlschlägt, ist der Befund das Ergebnis. Lösche keine Schlüsselbundeinträge oder Tokens automatisch, um den Test durchlaufen zu lassen, und schwäche keine Schutzregel ab (Sandbox-Entitlement hinzufügen, Keychain-Zugriffsgruppe öffnen, Gatekeeper-Prüfung umgehen), damit ein Lauf grün wird. Ein so erzeugtes „bestanden" beschreibt eine App, die niemand ausliefert.
+
+**Prüfliste**
+- [ ] Erststart in einem frischen Benutzerkonto ohne Absturz und mit sinnvollem leeren Zustand
+- [ ] Langsame Einrichtung mit App-Wechseln durchgespielt, keine Race Conditions
+- [ ] Jede optionale Freigabe einmal verweigert – Kernfunktion bleibt nutzbar, Statusanzeige stimmt
+- [ ] Nach Neustart: Zustand, Anmeldung und Statusanzeige korrekt
+- [ ] Schlüsselbund gesperrt/geändert/gelöscht – App erkennt es und bietet Neuanmeldung an
+- [ ] Upgrade von der zuletzt veröffentlichten Version getestet, Migrationen laufen durch
+- [ ] Getestete Fassung im Bericht benannt (selbst signiert · Developer ID · TestFlight); kein Ergebnis übertragen
+- [ ] Kein Token gelöscht und keine Schutzregel abgeschwächt, um den Test zu bestehen
+
+**Empfohlene Behebung** – Testkonto-Durchlauf in die Release-Checkliste aufnehmen; Erststart und Upgrade getrennt protokollieren; Berechtigungsstatus bei jedem Erscheinen neu lesen statt zwischenzuspeichern.
 
 ---
 
@@ -1175,6 +1243,8 @@ await mobileAds().setRequestConfiguration({ tagForChildDirectedTreatment: true, 
 - [ ] Crashlogs des letzten Builds ohne offene Abstürze
 - [ ] Produkt-IDs stimmen mit App Store Connect überein, IAP im Sandbox getestet, Restore vorhanden
 - [ ] Receipt-Validierung mit Sandbox-Fallback
+- [ ] Archiv inventarisiert: Bundle-ID, Version, Buildnummer, `DTXcodeBuild`/SDK, signierte Entitlements, eingebettete Privacy-Manifeste, enthaltene Targets
+- [ ] Upload-Erfolg und TestFlight-Verfügbarkeit werden nicht als Einreichbarkeit ausgegeben; fehlendes Archiv steht als offene Frage im Bericht
 
 **2.2 Betatests**
 - [ ] Keine Beta-/Alpha-Bezeichnungen im Store-Build
@@ -1203,6 +1273,7 @@ await mobileAds().setRequestConfiguration({ tagForChildDirectedTreatment: true, 
 - [ ] tvOS: Siri-Remote-Bedienung vollständig, Controller-Pflicht kommuniziert
 - [ ] Keine Neustart-Aufforderungen, keine `App-Prefs:`-URLs, keine Aufforderung zu systemweiten Einstellungsänderungen
 - [ ] macOS: Sandbox (i), reines Bundle (ii), kein Autostart (iii), kein Code-Nachladen (iv), kein Root/setuid (v), keine Lizenzschlüssel (vi), kein eigener Updater (vii), aktuelles macOS ohne Java (viii), alle Sprachen im Bundle (ix)
+- [ ] macOS: Erstinstallations- und Upgrade-Test in frischem Benutzerkonto gelaufen (verweigerte Freigaben, Neustart, Schlüsselbundwechsel); getestete Fassung benannt; nichts abgeschwächt, um grün zu werden
 
 **2.5 Software**
 - [ ] Keine Unterstrich-Selektoren, kein `dlopen` auf PrivateFrameworks, kein Swizzling von UIKit-Internals (App und Pods)

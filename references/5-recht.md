@@ -61,7 +61,7 @@ Dieser Punkt ist in zehn Buchstaben unterteilt. Jeder wird einzeln behandelt, we
 
 **Kern der Regel** – Jede App braucht eine Datenschutzerklärung, und zwar an zwei Stellen: als URL im Metadatenfeld in App Store Connect und leicht auffindbar innerhalb der App. Die Erklärung muss beschreiben, welche Daten die App erhebt, wie sie erhoben werden, wofür sie genutzt werden, wie lange sie aufbewahrt werden, wie der Nutzer Löschung oder Widerruf erreichen kann und welche Dritten (SDKs, Analysedienste, Werbenetzwerke) Daten erhalten. Für eingebundene Drittanbieter-SDKs muss der Entwickler sicherstellen, dass diese denselben Schutz einhalten wie die App selbst.
 
-**Risikostufe** – Hoch. Fehlt die Erklärung in der App, wird die Einreichung nahezu sicher abgelehnt; die Behebung ist aber trivial.
+**Risikostufe** – Hoch. Die Guideline verlangt die Erklärung ausdrücklich auch in der App; fehlt sie dort, ist das Ablehnungsrisiko hoch – die Behebung dafür trivial.
 
 **Woran du es im Code erkennst**
 
@@ -74,6 +74,12 @@ React Native/Expo:
 - `Linking.openURL(...)`, `WebBrowser.openBrowserAsync(...)` (expo-web-browser) mit Privacy-URL.
 - `app.json`/`app.config.js` enthält keinen Privacy-Link; das ist nur in App Store Connect hinterlegt, nicht im Bundle.
 
+**Ein erreichbarer Link ist nur die halbe Prüfung** – Dass die URL lädt und kein 404 kommt, sagt über die Konformität nichts. Geprüft wird der Inhalt der Seite, und zwar gegen das, was die App tatsächlich tut. Die Seite muss erkennbar *diese* App behandeln, die erhobenen Datenarten benennen, die Empfänger nennen (Backend, Dritt-SDKs, KI-Anbieter), sagen, was lokal auf dem Gerät bleibt und was weitergegeben wird, und Aufbewahrung, Löschung und Widerruf beschreiben. Eine allgemeine Website-Datenschutzerklärung, die nur den Webauftritt des Unternehmens abdeckt, ist kein Ersatz – sie nennt weder die App noch deren SDKs und erwähnt die Weitergabe an einen KI-Dienst nicht.
+
+Abgleich Zeile für Zeile: Jedes SDK, jeder Endpunkt und jede Berechtigung, die du im Code gefunden hast, muss sich auf der Seite wiederfinden. Findest du eine Weitergabe im Code, die dort nicht steht, ist das ein Befund nach 5.1.1(i) – unabhängig davon, ob der Link funktioniert.
+
+**Wenn du die Seite nicht lesen kannst** – Liegt nur eine URL vor und du hast keinen Zugriff auf den Inhalt, dann prüfe ihn nicht „sinngemäß" und nimm auch nicht an, er sei in Ordnung. Der Punkt bleibt ausdrücklich offen: Er gehört in „Offene Fragen an das Team" mit der Angabe, welche Datenarten und Empfänger die Seite nach deinem Code-Befund nennen muss. In der Einreichungs-Checkliste steht dafür ❓, nicht ✅.
+
 **Typische Verstöße**
 
 ❌ Nur der Link in App Store Connect, in der App nirgends erreichbar.
@@ -82,12 +88,20 @@ React Native/Expo:
 
 ❌ Erklärung nennt Firebase Analytics nicht, obwohl `FirebaseAnalytics` importiert ist.
 
+❌ Der Link zeigt auf die allgemeine Datenschutzerklärung der Firmenwebsite; die App, ihre Berechtigungen und die Weitergabe an einen KI-Dienst kommen dort nicht vor.
+
+❌ Die Seite lädt, beschreibt aber ausschließlich lokale Verarbeitung, während die App Inhalte an einen Cloud-Anbieter sendet.
+
 ✅ Einstellungen → „Datenschutzerklärung" öffnet die URL im `SFSafariViewController` bzw. `WebBrowser.openBrowserAsync`.
 
 **Prüfliste**
 - [ ] Datenschutz-URL ist in der App dauerhaft erreichbar (nicht nur Onboarding).
+- [ ] Inhalt der Seite gelesen, nicht nur der Link geprüft: Sie behandelt erkennbar diese App.
 - [ ] Alle im Bundle gefundenen Dritt-SDKs werden in der Erklärung genannt.
+- [ ] Datenarten, Empfänger, lokale Verarbeitung und mögliche Weitergabe (auch an KI-Dienste) sind beschrieben und decken sich mit dem Code-Befund.
+- [ ] Keine reine Website-Datenschutzerklärung als Ersatz.
 - [ ] Erklärung nennt Aufbewahrungsdauer und Löschweg.
+- [ ] Seite nicht einsehbar? Punkt bleibt offen (❓), keine Annahme im Bericht.
 
 **Empfohlene Behebung** – Link in den Einstellungen; Anzeige via `expo-web-browser` (Expo) bzw. `react-native-inappbrowser-reborn` (bare) oder `SFSafariViewController` (nativ).
 
@@ -148,6 +162,8 @@ Analytics.setAnalyticsCollectionEnabled(ConsentStore.shared.analyticsAllowed)
 
 **Risikostufe** – Hoch, wenn Berechtigungen ohne erkennbaren Zweck angefordert werden; Mittel bei bloßem „zu früh".
 
+**Systemfreigabe und Datenweitergabe sind zwei getrennte Fragen** – Das ist der häufigste Denkfehler in Berichten, und auf macOS fällt er besonders oft an, weil dort Kontakte, Kalender, Ordner, Bildschirmaufnahme und Automatisierung einzeln freigegeben werden. Die Systemfreigabe erlaubt der App den *lokalen Zugriff* auf die Quelle – mehr nicht. Sie überträgt keine Kontakte an ein Backend und keinen Ordnerinhalt an einen KI-Dienst. Wer Daten nach dem Zugriff weitergibt, braucht dafür eine zweite, eigene Einwilligung nach 5.1.2(i); wer nur liest und lokal verarbeitet, braucht sie nicht. Prüfe deshalb immer beides getrennt: Wofür wurde der Zugriff erteilt, und wohin gehen die gelesenen Daten anschließend? Im Bericht gehören beide Antworten nebeneinander, sonst liest das Team eine erteilte TCC-Freigabe als Freibrief.
+
 **Woran du es im Code erkennst**
 
 Swift/Objective-C:
@@ -184,6 +200,8 @@ const onScanPressed = async () => {
 - [ ] Jeder UsageDescription-Schlüssel hat ein korrespondierendes, genutztes Framework/Modul.
 - [ ] Berechtigungen werden im Kontext der Funktion angefragt, nicht beim Start.
 - [ ] Nach Ablehnung bleibt die Kernfunktion nutzbar (Fallback vorhanden).
+- [ ] Optionale Berechtigungen lassen sich ablehnen, ohne dass die App den Nutzer erneut dorthin drängt oder den Ablauf abbricht.
+- [ ] Erteilter Zugriff und Weitergabe sind getrennt geprüft: Was passiert mit den gelesenen Daten nach dem Zugriff? (weiter bei 5.1.2(i))
 - [ ] Für Fotoauswahl wird `PHPickerViewController` / `expo-image-picker` ohne Vollzugriff genutzt.
 
 **Empfohlene Behebung** – Nicht benötigte Schlüssel und Config-Plugins entfernen; `PHPickerViewController` statt `PHPhotoLibrary`; Kontaktauswahl über `CNContactPickerViewController` (keine Berechtigung nötig) bzw. `expo-contacts` `presentContactPickerAsync()`.
@@ -206,6 +224,10 @@ React Native/Expo:
 - `app.json` → `expo.ios.infoPlist.NS…UsageDescription`.
 - Config-Plugin-Optionen wie `["expo-location", { "locationAlwaysAndWhenInUsePermission": "..." }]`, `["expo-camera", { "cameraPermission": "..." }]`, `["expo-tracking-transparency", { "userTrackingPermission": "..." }]`. Werden Optionen weggelassen, schreibt Expo einen englischen Standardtext wie „Allow $(PRODUCT_NAME) to access your camera" – das ist generisch und wird beanstandet.
 - Bare RN: `ios/<App>/Info.plist` direkt.
+
+**Vorabdialoge vor Systemfreigaben** – Ein eigener Erklär-Screen unmittelbar vor dem Systemdialog ist zulässig und oft sinnvoll. Er darf den Nutzer aber nicht zur Zustimmung drängen. Apples Gestaltungsvorgaben verlangen dafür neutrale Schaltflächen: „Weiter" statt „Erlauben", „Kamera aktivieren" statt „Ja, unbedingt". Verboten sind Belohnungen, Drohungen („ohne Kamera funktioniert nichts", wenn das nicht stimmt), Schaltflächen, die den System-Button nachbauen, und Vorabdialoge, die nach „Später" bei jedem Start wiederkehren. Quelle: [Human Interface Guidelines – Privacy](https://developer.apple.com/design/human-interface-guidelines/privacy).
+
+**Statusanzeige nach dem Systemdialog** – Der Zustand, den die App anzeigt, muss dem tatsächlichen Berechtigungsstatus entsprechen – auch nachdem der Nutzer im Systemdialog abgelehnt, die Freigabe später in den Systemeinstellungen geändert oder das Gerät neu gestartet hat. Prüfe, ob der Status bei jedem Erscheinen neu gelesen wird (`authorizationStatus`, `getPermissionsAsync`, auf macOS `CNContactStore.authorizationStatus(for:)`, `AXIsProcessTrusted()`) statt einmalig beim ersten Start in `UserDefaults`/`AsyncStorage` zwischengespeichert zu werden. Ein „Zugriff aktiv"-Häkchen, das nach einem Neustart oder nach Entzug der Freigabe stehen bleibt, ist eine falsche Angabe gegenüber dem Nutzer und fällt im Review auf, weil der Gutachter genau diesen Weg geht.
 
 **Typische Verstöße**
 
@@ -234,6 +256,8 @@ React Native/Expo:
 - [ ] Keine Platzhalter, keine leeren Strings, keine Standardtexte von Config-Plugins.
 - [ ] Lokalisierte Fassungen (`InfoPlist.strings`, `expo-localization`-Plugin `infoPlist`) vollständig.
 - [ ] Status wird vor erneuter Anfrage geprüft (`authorizationStatus`, `getPermissionsAsync`).
+- [ ] Unmittelbarer Vorabdialog vor einer Systemfreigabe nutzt neutrale Schaltflächen („Weiter"), keine Drängel-, Belohnungs- oder Drohtexte und keinen nachgebauten System-Button.
+- [ ] Die angezeigte Berechtigungsstatus-Anzeige stimmt nach Ablehnung, nach Änderung in den Systemeinstellungen und nach einem Neustart – Status wird gelesen, nicht zwischengespeichert.
 
 **Empfohlene Behebung** – Texte nach der Tabelle unten neu formulieren; bei Expo alle Plugin-Optionen für Berechtigungstexte setzen, bei mehrsprachigen Apps `expo-localization` mit `ios.infoPlist`-Lokalisierung oder `InfoPlist.strings` per Config-Plugin.
 
@@ -530,6 +554,33 @@ React Native/Expo:
 
 **Drittanbieter-KI** – Seit der Überarbeitung vom 13. November 2025 steht in 5.1.2(i): „You must clearly disclose where personal data will be shared with third parties, including with third-party AI, and obtain explicit permission before doing so." Die App muss also offenlegen, welche Daten an welchen Anbieter gehen, und *vorher* ausdrücklich zustimmen lassen. Die Guideline sagt nicht, wo die Offenlegung stehen muss. Veröffentlichte Ablehnungen deuten aber darauf hin, dass ein Absatz in der Datenschutzerklärung nicht genügt – sicher ist ein Hinweis in der App vor dem ersten gesendeten Inhalt. In einem veröffentlichten Fall (September 2026) traf die Ablehnung auch eine App, in der Nutzer ihren eigenen API-Schlüssel eintrugen. Nach 5.1.1(i) muss die Datenschutzerklärung die Weitergabe an Dritte ohnehin abdecken. On-Device-Modelle wie Apples Foundation Models fallen nicht darunter, solange nichts das Gerät verlässt.
 
+**Drei Fälle unterscheiden** – „KI-Funktion" ist kein einheitlicher Tatbestand. Ordne die App vor jedem Befund nach 5.1.2(i) einem der drei Fälle zu. Die Pflichten unterscheiden sich, und ein Bericht, der sie vermischt, schickt das Team in die falsche Behebung.
+
+| Fall | Was passiert | Was der Nutzer vor dem ersten Senden erfahren muss |
+|---|---|---|
+| **A – fest eingebundener Anbieter** | Die App ruft einen bestimmten Dienst auf, der im Code steht: OpenAI, Anthropic, Gemini, Mistral, ein eigenes Proxy-Backend, das weiterreicht. Der Empfänger steht zur Bauzeit fest. | Anbietername, Datenart, dass die Daten das Gerät verlassen; Zustimmung vor dem ersten Aufruf; Widerruf in den Einstellungen. Der Anbieter steht zusätzlich in der Datenschutzerklärung. |
+| **B – vom Nutzer konfigurierte Clients** | Der Nutzer richtet die Gegenstelle selbst ein: eigener API-Schlüssel, eigene Basis-URL, ein lokaler MCP-Server, an den sich beliebige Clients anbinden. Der Empfänger steht erst zur Laufzeit fest und kann wechseln. | Welche Daten die App bereitstellt und an wen sie dadurch gehen *können*, welche Kategorie von Empfänger das ist, und dass die App den weiteren Weg der Daten nicht kontrolliert. Zustimmung vor der ersten Weitergabe, nicht erst bei der Einrichtung. |
+| **C – ausschließlich lokale Verarbeitung** | Ein Modell auf dem Gerät (Apple Foundation Models, Core ML, eingebettetes GGUF/MLX-Modell). Kein Aufrufpfad verlässt das Gerät. | Nichts nach 5.1.2(i) – aber nur, solange *kein* Pfad Daten versendet, auch nicht zur Telemetrie, Fehlerdiagnose oder Modellaktualisierung. |
+
+**Datenfluss bei MCP** – Ein MCP-Server, der auf dem Gerät des Nutzers läuft, ist Fall B, nicht Fall C. Beschreibe die Kette vollständig, sonst wird die Prüfung falsch:
+
+```
+Datenquelle (Dateien, Mail, Kalender, Kontakte, App-Daten)
+  → LocalMCP (läuft lokal, liest die Quelle, beantwortet Anfragen)
+    → anfragender Client (kann ein lokales Modell, ein Desktop-Client oder ein Cloud-Dienst sein)
+      → mögliche weitere Verarbeitung beim Betreiber dieses Clients
+```
+
+Lokal ist an dieser Kette nur das erste und zweite Glied. Was der anfragende Client mit den Daten tut, entscheidet er, nicht die App. Genau das muss der Nutzer vorher wissen.
+
+**Was du in diesem Fall nicht tun darfst**
+
+- **Keine Anbieter erfinden.** Steht der Empfänger zur Laufzeit nicht fest, nenne die Datenart und die Empfängerkategorie („der von dir eingerichtete Client"), nicht einen ausgedachten Firmennamen. Ein Bericht, der OpenAI behauptet, wo der Nutzer seinen eigenen Endpunkt einträgt, ist falsch.
+- **Nicht pauschal „bleibt alles lokal" schreiben.** Das gilt nur für Fall C und nur nach Prüfung aller Aufrufpfade. Dass eine Komponente den Namen „Local…" trägt, belegt es nicht.
+- **Verbindungseinrichtung ist kein Einwilligungsnachweis.** Dass der Nutzer bewusst einen Schlüssel eingetragen oder einen Client verbunden hat, ist kein Beleg für eine Einwilligung im Sinne von 5.1.2(i). Apple verlangt Offenlegung und ausdrückliche Zustimmung *vor* der Weitergabe – also einen eigenen Hinweis mit Datenart und Empfänger und eine Entscheidung, die der Nutzer treffen und widerrufen kann. Ein Einrichtungsdialog erfüllt das nur, wenn er genau das enthält. Quelle: [App Review Guidelines, 5.1.2](https://developer.apple.com/app-store/review/guidelines/de/).
+
+**Erfahrungsstand (Fall B, Stand September 2026)** – Für eine App mit LocalMCP wurde die Offenlegung nach einer Ablehnung umgesetzt und erneut eingereicht. Eine Zustimmung von Apple zu dieser Lösung ist bislang nicht belegt. Führe sie deshalb als **eingereichte Korrektur**, nicht als von Apple akzeptierte Musterlösung, und schreibe in keinen Bericht, dieser Aufbau sei abgenommen.
+
 **Risikostufe** – Kritisch. Apple prüft, ob Werbe-/Attributions-SDKs im Bundle sind, und lehnt ab, wenn kein ATT-Dialog erscheint oder wenn trotz Ablehnung Tracking-Endpunkte kontaktiert werden. Bei KI-Funktionen sind Ablehnungen dokumentiert, wenn Chat-Inhalte, Fotos oder Dokumente ohne vorherigen Hinweis und Zustimmung an einen Cloud-Anbieter gehen.
 
 **Woran du es im Code erkennst**
@@ -553,6 +604,16 @@ Drittanbieter-KI (beide Codebasen):
 - Endpunkte: `api.openai.com`, `api.anthropic.com`, `generativelanguage.googleapis.com`, `api.mistral.ai`, `api.groq.com`, `openrouter.ai`, `api.deepseek.com`, `api.perplexity.ai`; eigene Proxy-Backends, die Prompts weiterreichen.
 - SDKs: Swift `import OpenAI`, `GoogleGenerativeAI`, `FirebaseAI`/`FirebaseVertexAI`; JS `openai`, `@anthropic-ai/sdk`, `@google/genai`, `@google/generative-ai`, `firebase/ai`.
 - Fehlender Zusammenhang: der erste Aufruf (`chat.completions.create`, `messages.create`, `generateContent`) ist erreichbar, ohne dass vorher ein gespeicherter Einwilligungs-Status (`aiConsentGiven`, `@AppStorage`) geprüft wird.
+
+Vom Nutzer konfigurierte Clients und MCP (Fall B):
+- Eingabefelder für fremde Schlüssel und Endpunkte: `baseURL`, `apiBase`, `OPENAI_BASE_URL`, `customEndpoint`, ein Einstellungsfeld „API-Schlüssel".
+- MCP: `@modelcontextprotocol/sdk`, `mcp-server`, `StdioServerTransport`, `SSEServerTransport`, `StreamableHTTPServerTransport`, `listen(`/`bind(` auf `127.0.0.1`, eine `mcp.json`/`claude_desktop_config.json` im Repository, Werkzeugdefinitionen (`registerTool`, `tools/list`, `resources/read`).
+- Welche Quellen der Server freigibt: Dateipfade, Mail-, Kalender- oder Kontaktzugriffe hinter einem Tool-Handler. Das ist die Datenart, die in den Hinweis gehört.
+- Fehlender Zusammenhang: Der Tool-Handler liefert Daten aus, ohne dass ein gespeicherter Einwilligungs-Status geprüft wird; die einzige „Zustimmung" ist der Einrichtungsdialog für die Verbindung.
+
+Ausschließlich lokale Verarbeitung (Fall C):
+- `FoundationModels`, `SystemLanguageModel`, `LanguageModelSession`, `CoreML`/`MLModel`, `llama.cpp`, `mlx-swift`, `.gguf`/`.mlmodelc` im Bundle.
+- Gegenprobe vor jeder „lokal"-Aussage: Gibt es daneben einen Netzwerkpfad für Telemetrie, Fehlerberichte, Modell-Downloads oder einen Fallback auf einen Cloud-Dienst, wenn das lokale Modell fehlt?
 
 **Typische Verstöße**
 
@@ -599,6 +660,10 @@ useEffect(() => {
 - [ ] Nutrition Label in App Store Connect („Daten, die zum Tracking verwendet werden") stimmt mit Code überein.
 - [ ] `NSPrivacyTracking` und `NSPrivacyTrackingDomains` im Manifest gesetzt.
 - [ ] Gehen Inhalte an einen KI-Dienst Dritter: In-App-Hinweis mit Datenart und Anbietername vor dem ersten Senden, ausdrückliche Zustimmung, Widerruf möglich; Anbieter auch in der Datenschutzerklärung.
+- [ ] KI-Fall bestimmt (A fest eingebundener Anbieter · B vom Nutzer konfigurierte Clients/MCP · C nur lokal) und im Bericht benannt.
+- [ ] Fall B: Hinweis nennt Datenart und Empfängerkategorie, nicht einen erfundenen Anbieter; Zustimmung liegt vor der ersten Weitergabe, nicht nur im Einrichtungsdialog.
+- [ ] Fall B mit MCP: Datenfluss Quelle → LocalMCP → anfragender Client → weitere Verarbeitung ist dem Nutzer beschrieben.
+- [ ] Fall C: Jeder Aufrufpfad geprüft, keine Telemetrie-, Fallback- oder Modell-Download-Verbindung; erst dann darf „bleibt auf dem Gerät" im Bericht stehen.
 
 **Empfohlene Behebung** – `expo-tracking-transparency` (Expo) oder `react-native-tracking-transparency` (bare); nativ `ATTrackingManager`. Attribution ohne ATT über SKAdNetwork 4 / AdAttributionKit (`SKAdNetworkItems` in `Info.plist`). Für KI-Dienste: Einwilligungs-Sheet vor dem ersten Aufruf, Status persistent speichern (`@AppStorage`, `expo-secure-store`/`AsyncStorage`), jeden Aufrufpfad über denselben Guard führen; in den Review-Notizen beschreiben, wo der Hinweis erscheint.
 
@@ -1421,9 +1486,12 @@ const tabs = reviewMode ? baseTabs : [...baseTabs, gamblingTab];
 
 ### 5.1.1 Datenerhebung und -speicherung
 - [ ] (i) Datenschutz-URL in App Store Connect UND dauerhaft in der App; alle Dritt-SDKs genannt.
+- [ ] (i) Inhalt der Seite geprüft: diese App, Datenarten, Empfänger, lokale Verarbeitung, Weitergabe; keine allgemeine Website-Erklärung als Ersatz; nicht prüfbar = offene Frage.
 - [ ] (ii) Consent mit gleichwertigem Ablehnen-Pfad, Toggles standardmäßig aus, Widerruf möglich, kein Datenversand vor Zustimmung.
-- [ ] (iii) Nur benötigte Berechtigungen; Anfrage im Funktionskontext; Kernfunktion ohne optionale Berechtigungen nutzbar; Picker statt Vollzugriff.
+- [ ] (iii) Nur benötigte Berechtigungen; Anfrage im Funktionskontext; Kernfunktion ohne optionale Berechtigungen nutzbar; optionale Freigaben ablehnbar; Picker statt Vollzugriff.
+- [ ] (iii) Systemfreigabe und Datenweitergabe getrennt bewertet – erteilter Zugriff ist kein Beleg für erlaubte Weitergabe.
 - [ ] (iv) Alle Purpose Strings konkret, wahr, lokalisiert; keine Plugin-Standardtexte; Status vor erneuter Anfrage geprüft.
+- [ ] (iv) Vorabdialoge mit neutralen Schaltflächen; Statusanzeige stimmt nach Ablehnung, Einstellungsänderung und Neustart.
 - [ ] (v) Kontolöschung in der App vorhanden, echt (Backend + Provider), Sign-in-with-Apple-Revoke; Gastmodus wenn kein Konto nötig.
 - [ ] (vi) Kein heimliches Auslesen von Zwischenablage, Passwörtern, Fremd-Logins außerhalb OAuth.
 - [ ] (vii) SafariViewController/WebViews nur sichtbar; keine Tracking-Instanzen.
@@ -1434,6 +1502,7 @@ const tabs = reviewMode ? baseTabs : [...baseTabs, gamblingTab];
 
 ### 5.1.2 Datennutzung und -weitergabe
 - [ ] (i) Tracking-SDKs identifiziert; ATT-Dialog vor SDK-Start; bei Ablehnung kein IDFA, keine Ersatz-IDs; kein Anreiz; Nutrition Label passt.
+- [ ] (i) KI-Fall A/B/C bestimmt; bei B (eigener Schlüssel, eigener Endpunkt, MCP) Datenart und Empfängerkategorie offengelegt und Zustimmung vor der ersten Weitergabe; „nur lokal" nur nach Prüfung aller Aufrufpfade.
 - [ ] (ii) Keine Rohdaten aus Berechtigungen in Analytics; Marketing-Einwilligung getrennt.
 - [ ] (iii) Keine heimlichen Profile, kein Fingerprinting.
 - [ ] (iv) Keine Kontakt-/Foto-Datenbanken.
