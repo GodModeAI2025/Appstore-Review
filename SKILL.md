@@ -1,10 +1,10 @@
 ---
 name: app-store-freigabe-check
-description: Prüft App-Code und App-Store-Metadaten gegen Apples App Review Guidelines (Fassung Juni 2026) und liefert einen deutschsprachigen Befundbericht mit Ablehnungsrisiken, Fundstellen und Behebungsvorschlägen. Immer verwenden, wenn eine iOS-, iPadOS-, macOS-, watchOS-, tvOS- oder visionOS-App (Swift, SwiftUI, Objective-C, React Native, Expo) auf Store-Tauglichkeit geprüft, für die Einreichung vorbereitet, nach einer Ablehnung überarbeitet oder ein Feature mit In-App-Käufen, Abos, Login, Tracking, Berechtigungen, nutzergenerierten Inhalten, Kids-Kategorie, Gesundheitsdaten, VPN, MDM oder Glücksspiel gebaut wird. Auch bei Formulierungen wie „Wird das Apple durchwinken?", „App Review Rejection", „Guideline 3.1.1", „Warum wurde meine App abgelehnt?", „Store-Check", „Compliance-Check vor Release", „Purpose Strings prüfen", „ATT nötig?" oder „Kontolöschung Pflicht?" – auch wenn das Wort App Store nicht fällt.
+description: Prüft App-Code und App-Store-Metadaten gegen Apples App Review Guidelines (Fassung Juni 2026) und liefert einen deutschsprachigen Befundbericht mit Ablehnungsrisiken, Fundstellen und Behebungsvorschlägen. Immer verwenden, wenn eine iOS-, iPadOS-, macOS-, watchOS-, tvOS- oder visionOS-App (Swift, SwiftUI, Objective-C, React Native, Expo) auf Store-Tauglichkeit geprüft, für die Einreichung vorbereitet, nach einer Ablehnung überarbeitet oder ein Feature mit In-App-Käufen, Abos, Login, Tracking, Berechtigungen, nutzergenerierten Inhalten, Kids-Kategorie, Gesundheitsdaten, VPN, MDM oder Glücksspiel gebaut wird. Ebenso nach der Freigabe, wenn es um Pflege gegenüber Endkunden geht: Bewertungen beantworten, „Was ist neu"-Texte, Support-Anfragen, Erstattungen, Abo-Kündigung, Datenauskunft, Störungskommunikation. Auch bei Formulierungen wie „Wird das Apple durchwinken?", „App Review Rejection", „Guideline 3.1.1", „Warum wurde meine App abgelehnt?", „Store-Check", „Compliance-Check vor Release", „Purpose Strings prüfen", „ATT nötig?" oder „Kontolöschung Pflicht?" – auch wenn das Wort App Store nicht fällt.
 license: MIT
 metadata:
   author: Mark Zimmermann
-  version: "1.1.0"
+  version: "1.2.0"
   stand: "App Review Guidelines vom 8. Juni 2026, geprüft September 2026"
 ---
 
@@ -20,6 +20,15 @@ Codebasen: Swift/SwiftUI, Objective-C, React Native (bare), Expo.
 Apples Gutachter lesen keinen Quellcode. Sie starten die App, klicken sich durch, lesen Info.plist, Entitlements, Privacy-Manifest und die Metadaten in App Store Connect. Alles, was du im Code findest, ist deshalb nur dann ein echtes Risiko, wenn es sich im Verhalten oder in den Metadaten zeigt. Formuliere Befunde immer aus der Sicht dessen, was der Gutachter *sieht*, nicht aus der Sicht der Codezeile. Das verhindert Fehlalarme und macht jeden Befund für das Team nachvollziehbar.
 
 Zweiter Grundsatz: Ein Bericht mit 80 gleichgewichteten Punkten wird nicht gelesen. Trenne hart zwischen „führt sicher zur Ablehnung", „führt wahrscheinlich zur Ablehnung" und „Schönheitsfehler". Lieber fünf gut begründete kritische Befunde als vierzig Hinweise.
+
+## Zwei Aufgaben: Einreichung und Pflege
+
+Der Skill hat zwei Modi. Welcher gilt, ergibt sich aus der Anfrage.
+
+- **Einreichungsmodus** (Standard): Die App soll zur Freigabe. Es gilt der Ablauf unten, am Ende steht der Befundbericht mit Ampel.
+- **Pflegemodus**: Die App ist bereits im Store, und es geht um den Umgang mit Endkunden. Beispiele: Bewertung beantworten, Release-Notes schreiben, Support-Anfrage einordnen, Erstattung oder Abo-Kündigung klären, Datenauskunft nach DSGVO, Störung kommunizieren. Dann gilt [Modul 6](references/6-pflege.md) (P1 bis P8) plus die betroffenen Regelmodule. Ergebnis ist ein Entwurf (Antwort, Text oder Checkliste) mit Begründung, keine Ampel.
+
+Im Pflegemodus gelten dieselben Grundsätze: Fundstelle statt Vermutung, Guideline-Nummer nennen, Rechtliches als offene Frage markieren.
 
 ## Ablauf
 
@@ -50,6 +59,7 @@ Lade nur die Module, die das Risikoprofil verlangt, und lies sie vollständig, b
 | 3 Geschäft | [references/3-geschaeft.md](references/3-geschaeft.md) | Sobald Geld, Abos, Guthaben, Spenden, Krypto oder externe Links vorkommen |
 | 4 Design | [references/4-design.md](references/4-design.md) | Immer – 4.2 (Mindestfunktionalität) und 4.8 (Login) treffen viele Apps unerwartet |
 | 5 Recht | [references/5-recht.md](references/5-recht.md) | Immer – Datenschutz (5.1) ist der häufigste Ablehnungsgrund überhaupt |
+| 6 Pflege | [references/6-pflege.md](references/6-pflege.md) | Nur im Pflegemodus oder wenn nach der Freigabe Bewertungen, Release-Notes, Support, Erstattungen, Datenanfragen oder Störungen anstehen. Im Einreichungsmodus nicht laden. |
 
 Bei Expo-Projekten: Die `Info.plist` existiert oft erst nach `npx expo prebuild`. Prüfe dann `app.json` → `expo.ios.infoPlist`, `expo.ios.entitlements` und die Config-Plugins der verwendeten Pakete; viele Purpose-Strings werden von Plugins gesetzt und müssen dort überschrieben werden.
 
@@ -79,6 +89,15 @@ Verwende die Vorlage in [references/befund-vorlage.md](references/befund-vorlage
 
 Schreibe auf Deutsch, in direkter Ansprache, ohne Floskeln. Code-Schnipsel in der Sprache des Projekts. Guideline-Nummern immer nennen, weil das Team damit in Apples Antwort und in den Modulen suchen kann.
 
+### Pflegemodus – Ablauf
+
+1. **Anfrage einordnen:** Bewertung, Release-Notes, Support-Fall, Erstattung, Abo, Datenanfrage, Störung oder Kundenkommunikation allgemein.
+2. **Modul 6 lesen**, dazu den Regelabschnitt, auf den P-Abschnitt verweist (etwa 5.1.1(v) bei Löschung, 2.3.12 bei Release-Notes, 5.6.1 bei Bewertungen).
+3. **Entwurf liefern:** Antwort, Text oder Checkliste, Begründung in zwei bis drei Sätzen, Zuständigkeit und Frist, wenn sie sich aus der Anfrage ergeben.
+4. **Rechtliches markieren:** Fristen, Kündigungsrecht oder Datenschutz-Details, die über Apples Regeln hinausgehen, landen unter „Offene Fragen". Keine Rechtsauskunft als Tatsache formulieren.
+
+Entwürfe für Kunden sind Vorschläge. Sie werden nicht von dir gesendet, veröffentlicht oder in App Store Connect eingetragen. Personenbezogene Daten aus einer Anfrage gehören nicht in öffentliche Antworten.
+
 ## Häufige Fehlurteile, die du vermeiden sollst
 
 - **Stripe-Import ist kein Befund.** Stripe für physische Waren, Dienstleistungen außerhalb der App oder Spenden an anerkannte Organisationen ist erlaubt. Der Befund entsteht erst, wenn der Kaufpfad digitale, in der App konsumierte Güter betrifft. Nutze den Entscheidungsbaum in Modul 3.
@@ -88,6 +107,7 @@ Schreibe auf Deutsch, in direkter Ansprache, ohne Floskeln. Code-Schnipsel in de
 - **Fehlende Kontolöschung ist kein Befund ohne Konto.** Wenn die App keine Konten anlegt, gibt es nichts zu löschen. Prüfe zuerst, ob Registrierung überhaupt existiert.
 - **EU-, US-, Brasilien- und Japan-Sonderregeln gelten nur dort.** Frage nach Zielregionen, bevor du externe Kauf-Links als kritisch einstufst; mit passendem Entitlement und Pflichthinweisen sind sie in mehreren Märkten zulässig.
 - **Nicht jede WebView ist ein Wrapper.** Eine WebView für AGB, Hilfe oder OAuth ist normal. 4.2 greift, wenn die Kernfunktion aus der WebView besteht und die App ohne Browser nichts Eigenes kann.
+- **Für App-Store-Abos reicht Apples Abo-Verwaltung.** Ein Link auf die Abo-Einstellungen des Apple-Kontos genügt. Einen eigenen Kündigungsbutton brauchen nur Verträge, die außerhalb des App Store geschlossen werden (Modul 6, P4).
 
 ## Nach einer Ablehnung durch Apple
 
@@ -103,6 +123,7 @@ Wenn das Team dir den Text einer Ablehnung gibt, arbeite so:
 - Er ersetzt keine Rechtsberatung zu DSGVO, COPPA, Finanz- oder Glücksspielrecht. Wo er auf solche Pflichten stößt, markiert er sie als offene Frage.
 - Er prüft kein Design gegen die Human Interface Guidelines. Dafür ist ein eigener Skill zuständig; hier zählt nur, was zur Ablehnung führt.
 - Er kann Metadaten in App Store Connect nicht sehen. Bitte das Team um Beschreibung, Screenshots, Altersfreigabe-Fragebogen und Review-Notizen, wenn Modul 2.3 geprüft werden soll.
+- Er schreibt nichts an Kunden, Bewertungen oder App Store Connect. Antwortentwürfe und Texte liefert er als Vorschlag, gesendet werden sie vom Team.
 
 ## Dateien dieses Skills
 
@@ -118,5 +139,6 @@ app-store-freigabe-check/
     ├── 2-leistung.md                – Guideline-Abschnitt 2
     ├── 3-geschaeft.md               – Guideline-Abschnitt 3
     ├── 4-design.md                  – Guideline-Abschnitt 4
-    └── 5-recht.md                   – Guideline-Abschnitt 5
+    ├── 5-recht.md                   – Guideline-Abschnitt 5
+    └── 6-pflege.md                  – Pflege gegenüber Endkunden (kein Apple-Guideline-Abschnitt)
 ```

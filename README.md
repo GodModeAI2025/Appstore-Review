@@ -23,6 +23,7 @@ Alle fünf Abschnitte der Guidelines sind vollständig abgedeckt, jeder Punkt mi
 | 3 Geschäft | In-App-Kauf, externe Kauf-Links mit regionalen Sonderregeln, Abonnements, Reader-Apps, Kryptowährungen, zulässige und unzulässige Geschäftsmodelle, Paywall-Prüfung, Entscheidungsbaum für digitale Güter |
 | 4 Design | Nachahmer, Mindestfunktionalität, Spam, Erweiterungen, Apple-Dienste, Push-Benachrichtigungen, Mini-Apps und Emulatoren, Login-Dienste, Apple Pay, Monetarisierung von Systemfunktionen |
 | 5 Recht | Datenschutz (Erklärung, Einwilligung, Purpose-Strings, Kontolöschung, Privacy-Manifest, ATT), Gesundheitsdaten, Kinder, Standort, geistiges Eigentum, Glücksspiel, VPN, MDM, Verhaltenskodex |
+| 6 Pflege (kein Apple-Guideline-Abschnitt) | Bewertungen beantworten mit Vorlagen, „Was ist neu"-Texte, Support-Kanal und öffentliche Links, Abrechnung und Erstattungen, Datenanfragen und Kontolöschung nach der Freigabe, Störungskommunikation, Versionspflege, Ton und Dark Patterns, Pflegeplan |
 
 Dazu kommt ein Schnellscan-Skript, das ein Projekt in Sekunden nach bekannten Mustern durchsucht: private APIs, hartcodierte Schlüssel, externe Checkout-URLs, fehlende oder vage Purpose-Strings, im nativen Code genutzte, aber nicht deklarierte Required-Reason-APIs, Aufrufe von KI-Diensten Dritter, Tracking-SDKs ohne ATT, Kontoerstellung ohne Kontolöschung, Drittanbieter-Login ohne Alternative, In-App-Käufe ohne Wiederherstellung, Android-Verweise, Hintergrundmodi, OTA-Update-Konfiguration und Debug-Reste.
 
@@ -55,6 +56,9 @@ Apple hat uns wegen Guideline 5.1.1(v) abgelehnt – was fehlt?
 Ist ATT bei unserem SDK-Setup nötig?
 Prüfe die Purpose-Strings und das Privacy-Manifest.
 Wir bauen Chat mit Bildupload – was verlangt Apple dafür?
+Formuliere eine Antwort auf diese Bewertung: „Seit dem Update stürzt die App beim Export ab.“
+Schreib den Was-ist-neu-Text für Version 2.4 aus dem Changelog.
+Ein Kunde verlangt Auskunft nach DSGVO – was muss ich beachten?
 ```
 
 Der Schnellscan lässt sich auch direkt aufrufen:
@@ -80,12 +84,13 @@ app-store-freigabe-check/
     ├── 2-leistung.md
     ├── 3-geschaeft.md
     ├── 4-design.md
-    └── 5-recht.md
+    ├── 5-recht.md
+    └── 6-pflege.md
 ```
 
 ## Grenzen
 
-Der Skill ersetzt keine Rechtsberatung zu DSGVO, COPPA, Finanz- oder Glücksspielrecht und prüft kein Design gegen die Human Interface Guidelines. Metadaten in App Store Connect kann er nicht einsehen; Beschreibung, Screenshots, Altersfreigabe-Fragebogen und Review-Notizen müssen dem Agenten bei Bedarf mitgegeben werden.
+Der Skill ersetzt keine Rechtsberatung zu DSGVO, COPPA, Finanz- oder Glücksspielrecht und prüft kein Design gegen die Human Interface Guidelines. Die Pflege-Texte aus Modul 6 sind Entwürfe; senden und veröffentlichen müssen sie Menschen. Metadaten in App Store Connect kann er nicht einsehen; Beschreibung, Screenshots, Altersfreigabe-Fragebogen und Review-Notizen müssen dem Agenten bei Bedarf mitgegeben werden.
 
 ## Lizenz
 
