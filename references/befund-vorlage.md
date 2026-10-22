@@ -74,6 +74,8 @@ Verwende diese Struktur für jeden Bericht. Abschnitte ohne Inhalt bleiben stehe
 
 {Optional, aber wertvoll: Text für das Feld „Notes for Review" in App Store Connect – Demo-Zugang, wo versteckte Funktionen zu finden sind, warum bestimmte Berechtigungen nötig sind, Nachweise für Lizenzen. Auf Englisch, weil Apples Gutachter Englisch lesen. Laut App-Store-Connect-Hilfe nimmt das Feld höchstens 4.000 Bytes auf – nicht Zeichen: Umlaute, Sonderzeichen und Emoji belegen mehrere Bytes, deshalb vor dem Einfügen in UTF-8-Bytes zählen.}
 
+{Bei Risiko für 4.3/4.2.6 (neuer Account, mehrere Apps, gut besetzte Kategorie, KI-gestützt entwickelt): Eigenleistungsblock „ORIGINALITY & AUTHORSHIP“ nach der Vorlage in Modul 4 voranstellen. Nur mit Antworten füllen, die das Team bestätigt hat; fehlende Antworten stehen in Abschnitt 5 als offene Fragen.}
+
 ---
 
 ## Regeln für die Formulierung

@@ -8,14 +8,14 @@ Zurück zur Übersicht: ../SKILL.md
 - **WebView-Hüllen ohne nativen Mehrwert (4.2)** – die häufigste Ablehnung in diesem Abschnitt. Ein `WKWebView` oder `react-native-webview` als einziger Screen reicht nicht, egal wie gut die Website ist.
 - **Drittanbieter-Login ohne datensparsame Alternative (4.8)** – Google-, Facebook- oder X-Login ohne Sign in with Apple (oder gleichwertige Option) wird bei jedem Einreichen bemängelt.
 - **Push-Prompt beim ersten Start ohne Kontext (4.5.4)** – Systemdialog sofort nach dem Launch, dazu Werbe-Pushes ohne Einwilligung, führen regelmäßig zu Ablehnungen.
-- **Template- und Generator-Apps (4.2.6, 4.3)** – viele fast identische Binaries desselben Entwickler-Accounts werden gebündelt abgelehnt, teils mit Account-Konsequenzen.
+- **Template- und Generator-Apps (4.2.6, 4.3)** – viele fast identische Binaries desselben Entwickler-Accounts werden gebündelt abgelehnt, teils mit Account-Konsequenzen. Auch einzelne, eigenständig entwickelte Apps erhalten die Sammelmeldung „4.3 - Spam and 4.2.6 - App Generation Services“ mit neun Rückfragen; ein Eigenleistungsblock in den Review-Notizen beantwortet sie vorab.
 - **Mini-Apps und Chatbots ohne Altersfreigabe und IAP (4.7)** – eingebettete HTML5-Inhalte, die eigene Bezahlwege oder unmoderierte Inhalte mitbringen.
 
 ## Inhalt
 
 - [4.1 Nachahmer](#41-nachahmer) – (a) Klone, (b) Impersonation, (c) Marken
 - [4.2 Mindestfunktionalität](#42-mindestfunktionalität) – 4.2.1 ARKit, 4.2.2 Marketing, 4.2.3 Eigenständigkeit/Downloads, 4.2.4–4.2.5 entfällt, 4.2.6 Template-Apps, 4.2.7 Remote Desktop
-- [4.3 Spam](#43-spam) – (a) Duplikate/gesättigte Kategorien, (b) Bundle-IDs, Live Activities, Push, Game Center
+- [4.3 Spam](#43-spam) – (a) Duplikate/gesättigte Kategorien, (b) Bundle-IDs, Live Activities, Push, Game Center, [Eigenleistung in den Review-Notizen belegen](#43-und-426-vorbeugen-eigenleistung-in-den-review-notizen-belegen)
 - [4.4 Erweiterungen](#44-erweiterungen) – 4.4.1 Keyboard, 4.4.2 Safari, 4.4.3 Steuer-/Sticker
 - [4.5 Apple-Websites und -Dienste](#45-apple-websites-und--dienste) – 4.5.1 Dokumentation, 4.5.2 MusicKit, 4.5.3 Spam, 4.5.4 Push, 4.5.5 Game Center, 4.5.6 Emoji
 - [4.6 entfällt](#46-entfällt)
@@ -252,6 +252,66 @@ React Native/Expo:
 **Prüfliste**
 - [ ] Nur eine Bundle-ID pro tatsächlicher App.
 - [ ] Live Activities bilden reale, zeitlich begrenzte Vorgänge ab.
+
+### 4.3 und 4.2.6 vorbeugen: Eigenleistung in den Review-Notizen belegen
+
+**Worum es geht** – Apple lehnt häufig mit einer Sammelmeldung „Guidelines 4.3 - Spam and 4.2.6 - App Generation Services" ab. Die Meldung nennt drei Verdachtsfälle: Duplikat einer bestehenden App (4.3(a)), austauschbare oder opportunistische Variante einer Kategorie (4.3(b)), Erzeugung aus Vorlage oder App-Generator ohne Einreichung durch den Inhaber der Inhalte (4.2.6). Wer die App für regelkonform hält, soll nicht neu einreichen, sondern im Resolution Center neun Fragen vollständig beantworten. Das kostet mindestens eine Review-Runde. Wer die Antworten schon bei der Einreichung in „Notes for Review" schreibt, gibt dem Gutachter die Belege, bevor er die Rückfrage stellt.
+
+**Risikostufe** – Hoch bei: neuem Entwickler-Account, mehreren Apps im selben Account, gut besetzter Kategorie (Habit-Tracker, Notizen, Timer, Rechner, Wetter, KI-Chat, Wallpaper), schneller Folge von Einreichungen, generisch wirkender Oberfläche. KI-gestützte Entwicklung ist kein Verstoß. 4.2.6 zielt auf kommerzielle Vorlagen und App-Generatoren, die Apps im Auftrag Dritter erzeugen und einreichen. Ein Entwickler, der eigene Ideen mit der Coding-Assistenz in Xcode schneller selbst umsetzt, ist der Inhaber der Inhalte im Sinne von 4.2.6. Genau das soll die Notiz belegen.
+
+**Die neun Fragen aus Apples Meldung** (sinngemäß; jede Antwort muss konkret sein, die Marketing-Beschreibung als Antwort lehnt Apple ausdrücklich ab)
+1. Was macht die App im Detail, welches Hauptproblem löst sie?
+2. Wer ist die Zielgruppe, möglichst genau?
+3. Welche Lücke schließt sie, die bestehende Apps nicht oder schlechter abdecken?
+4. Welche Beta-Tests gab es, und welches Feedback floss in den Produktions-Build?
+5. Eigenständiges Produkt oder Teil einer Suite? Bei Suite: Abgrenzung zu jeder anderen App.
+6. Ließe sich die Funktion als In-App-Kauf oder Erweiterung einer anderen eigenen App liefern? Wenn ja, warum nicht?
+7. Teilt das Binary wesentlichen Code, Frameworks oder Assets mit anderen Apps des Accounts?
+8. Teilt es Codebasis, SDK oder Inhaltsbibliothek mit Apps Dritter? Was ist der eigene Anteil?
+9. Wurde die App für einen Kunden oder Partner gebaut, der Inhalte, Konzept oder Marke liefert? Wenn ja, warum unter diesem Account?
+
+**Was du das Team fragen musst** – Die Antworten stehen nicht im Code. Stelle die Fragen als offene Fragen im Bericht und formuliere die Notiz erst, wenn sie beantwortet sind. Die Antworten bestimmen die Notiz; der Code liefert nur Belege.
+- Welches eigene Problem oder welche Beobachtung hat die Idee ausgelöst? (1, 3)
+- Für wen genau ist die App, in welcher Situation wird sie benutzt? (2)
+- Welche zwei, drei Konkurrenz-Apps kennt ihr, und was fehlt dort konkret? Welcher Screen der App zeigt den Unterschied? (3)
+- Gab es TestFlight-Tests? Wie viele Tester, welcher Zeitraum, welche zwei bis drei Änderungen gehen auf Feedback zurück? (4)
+- Welche anderen Apps liegen im Account oder sind geplant? Worin unterscheiden sie sich? (5, 6)
+- Welche eigenen Module, Pakete oder Assets nutzt ihr in mehreren Apps? Gibt es eine gekaufte Vorlage, ein White-Label-Produkt, einen No-Code- oder App-Generator? (7, 8)
+- Wem gehören Idee, Inhalte und Marke? Gibt es einen Auftraggeber? (9)
+- Wie wurde KI eingesetzt (z. B. Coding-Assistenz in Xcode für Code-Vorschläge, Tests, Refactoring)? Wer hat Funktionen festgelegt, geprüft und getestet? (9)
+
+**Woran du im Code Belege findest**
+- Eigenständige Fachlogik: Modelle, Berechnungen, Datenformate, die es so in keiner Vorlage gibt; benenne Dateien und Screens, die den Unterschied tragen.
+- Kein Template-Fingerabdruck: keine `tenant.json`/`brand.plist`, keine Kunden-Schalter in `app.config.js`, keine Generator-Spuren (Kommentare, Ordnernamen, Platzhalter-Assets eines Baukastens).
+- Geteilte Bausteine mit anderen eigenen Apps: lokale Swift-Packages, gemeinsame Pods oder npm-Workspaces. Sie sind zulässig, gehören aber offen in Antwort 7.
+- Git-Historie: wiederholte, kleinteilige Commits über Wochen sind ein guter Beleg für Eigenleistung. Biete sie nur an, wenn das Team sie wirklich vorlegen kann.
+
+**Typische Verstöße**
+- ❌ Notiz verspricht „extensive beta testing", in App Store Connect gibt es keinen TestFlight-Build. Apple kann die Angabe prüfen; falsche Angaben verstoßen gegen den Developer Code of Conduct (5.6) und gefährden das Konto.
+- ❌ Notiz wiederholt die Store-Beschreibung oder bleibt allgemein („unique, innovative, user-friendly").
+- ❌ Die App ist tatsächlich austauschbar, und die Notiz soll das kaschieren. Dann hilft keine Notiz; zuerst muss der Unterschied in der App selbst sichtbar werden.
+- ✅ Notiz nennt Zielgruppe, zwei konkrete Konkurrenten mit ihrer Lücke, den Screen, der die Lücke schließt, TestFlight-Zahlen mit zwei Feedback-Änderungen und eine klare Aussage zur Urheberschaft.
+
+**Vorlage für „Notes for Review"** – Englisch, Platzhalter ersetzen, nicht Zutreffendes streichen. Der Block ist auf rund 2.000 Bytes ausgelegt, damit neben Demo-Zugang und Berechtigungshinweisen Platz im 4.000-Byte-Feld bleibt. Die ausführliche Fassung bereithalten: Fragt Apple trotzdem nach, kommt sie vollständig ins Resolution Center.
+
+```text
+ORIGINALITY & AUTHORSHIP (Guidelines 4.3 / 4.2.6)
+1 Purpose: {App} helps {audience} to {core task}. It solves {problem} by {distinctive mechanism}.
+2 Users: {specific audience and usage situation}.
+3 Gap: {Competitor A} and {Competitor B} {what they lack}. {App} adds {feature 1} ({screen}) and {feature 2} ({screen}).
+4 Beta: TestFlight, {n} external testers, {month-month year}. Applied feedback: {feedback -> change}; {feedback -> change}.
+5 Scope: Standalone product. {No other apps on this account. | Other apps: {name} ({purpose}); no functional overlap.}
+6 Consolidation: {Not applicable, no other apps. | Not an add-on to {name} because {different audience/data/purpose}.}
+7 Shared code (own apps): {None beyond standard frameworks. | {package}: {role}.}
+8 Shared code (third parties): No template, white-label codebase, app builder or content library. Dependencies: {standard frameworks only | list}.
+9 Authorship: Concept, content, design and code are my own work as {individual developer | company}. No client, partner or app generation service provided content, concept or branding. I used AI coding assistance in Xcode as a development tool; I specified, reviewed and tested every feature and maintain the code myself.
+```
+
+**Prüfliste**
+- [ ] Risikofaktoren geprüft (neuer Account, mehrere Apps, gut besetzte Kategorie); bei Treffer Eigenleistungsblock in den Review-Notizen.
+- [ ] Alle neun Antworten konkret, ohne Marketingtext, jede Aussage belegbar (TestFlight-Daten, Screens, Git-Historie).
+- [ ] Unterschied zu Konkurrenz-Apps ist in der App selbst innerhalb der ersten Minute sichtbar, nicht nur in der Notiz.
+- [ ] KI-Einsatz als Entwicklungswerkzeug benannt, Urheberschaft für Konzept und Inhalte eindeutig.
 
 ## 4.4 Erweiterungen
 
@@ -616,6 +676,7 @@ React Native/Expo:
 **4.3 Spam**
 - [ ] Keine Build-Varianten als separate, fast identische Store-Apps; Kategorie nicht gesättigt oder USP belegt.
 - [ ] Eine Bundle-ID pro App; Live Activities, Push, Game Center ohne Spam/Phishing.
+- [ ] Bei Risikofaktoren Eigenleistungsblock (neun Antworten zu 4.3/4.2.6) in den Review-Notizen, jede Aussage belegbar.
 
 **4.4 Erweiterungen**
 - [ ] Alle Extension-Targets erfasst; kein StoreKit-Kauf und kein Marketing in Extensions.
