@@ -76,6 +76,8 @@ Verwende diese Struktur für jeden Bericht. Abschnitte ohne Inhalt bleiben stehe
 
 {Bei Risiko für 4.3/4.2.6 (neuer Account, mehrere Apps, gut besetzte Kategorie, KI-gestützt entwickelt): Eigenleistungsblock „ORIGINALITY & AUTHORSHIP“ nach der Vorlage in Modul 4 voranstellen. Nur mit Antworten füllen, die das Team bestätigt hat; fehlende Antworten stehen in Abschnitt 5 als offene Fragen.}
 
+{Nutzt die App MCP: Block „MODEL CONTEXT PROTOCOL (MCP)“ nach der Vorlage in Modul 2 („MCP-Apps“) einfügen – was MCP ist, was die App damit tut, Testweg, ein Satz pro Entitlement.}
+
 ---
 
 ## Regeln für die Formulierung

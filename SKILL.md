@@ -37,8 +37,9 @@ Bevor du Regeln anwendest, stelle fest, womit du es zu tun hast. Das entscheidet
    - Gibt es Chat, Kommentare, Uploads, Profile? → 1.2 mit allen Pflichtfunktionen.
    - Zielgruppe Kinder, Gesundheit, Finanzen, Glücksspiel, VPN, MDM? → jeweils die Sonderregeln.
    - Nur WebView? → 4.2 sofort prüfen, das ist ein K.-o.-Kriterium.
+   - Nutzt die App das Model Context Protocol (MCP) als Server oder Client? → Modul 2 („MCP-Apps“): Gutachter kennen MCP oft nicht und hinterfragen Netzwerk-, Apple-Events- und Datei-Entitlements. Erklärung von MCP, Begründung jedes Entitlements und Testweg gehören in die Review-Notizen.
    - Neuer Entwickler-Account, mehrere Apps im Account, gut besetzte Kategorie oder KI-gestützt entwickelt? → 4.3/4.2.6: Apple fragt dann oft mit neun Fragen nach Eigenleistung. Stelle dem Team die Fragen aus Modul 4 („Eigenleistung in den Review-Notizen belegen“) und schreibe die Antworten vorab in die Review-Notizen.
-4. **Schnellscan starten**: `scripts/schnellscan.py <projektpfad>` liefert in Sekunden eine Rohliste bekannter Muster (Private-API-Aufrufe, hartcodierte Secrets, externe Checkout-URLs, fehlende Purpose-Strings, nicht deklarierte Required-Reason-APIs, KI-Anbieter, Android-Verweise, Hintergrundmodi, OTA-Update-Konfiguration). Die Ausgabe ist ein Startpunkt, kein Urteil – jeder Treffer wird von dir im Kontext bewertet.
+4. **Schnellscan starten**: `scripts/schnellscan.py <projektpfad>` liefert in Sekunden eine Rohliste bekannter Muster (Private-API-Aufrufe, hartcodierte Secrets, externe Checkout-URLs, fehlende Purpose-Strings, nicht deklarierte Required-Reason-APIs, KI-Anbieter, Android-Verweise, Hintergrundmodi, OTA-Update-Konfiguration, MCP-SDKs). Die Ausgabe ist ein Startpunkt, kein Urteil – jeder Treffer wird von dir im Kontext bewertet.
 
 ### Phase 2 – Module laden und prüfen
 
@@ -77,7 +78,7 @@ Verwende die Vorlage in [references/befund-vorlage.md](references/befund-vorlage
 4. **Was bereits gut gelöst ist** – drei bis fünf Punkte. Das ist kein Höflichkeitsblock: Das Team soll wissen, was es beim Beheben nicht kaputt machen darf.
 5. **Offene Fragen an das Team** – alles, was du aus dem Code nicht entscheiden kannst (Lizenzen, Geschäftsmodell, Zielregionen, ob ein Abo-Dienst wirklich „Reader" ist).
 6. **Einreichungs-Checkliste** – die abgehakte Kurzliste aus den geladenen Modulen.
-7. **Vorgeschlagene Review-Notizen** – Text für „Notes for Review“, bei 4.3/4.2.6-Risiko mit Eigenleistungsblock. Nur Aussagen, die das Team bestätigt hat; nichts erfinden, was Apple prüfen kann (TestFlight, Urheberschaft).
+7. **Vorgeschlagene Review-Notizen** – Text für „Notes for Review“, bei 4.3/4.2.6-Risiko mit Eigenleistungsblock, bei MCP mit MCP-Block (Protokoll, Entitlements, Testweg). Nur Aussagen, die das Team bestätigt hat; nichts erfinden, was Apple prüfen kann (TestFlight, Urheberschaft).
 
 Schreibe auf Deutsch, in direkter Ansprache, ohne Floskeln. Code-Schnipsel in der Sprache des Projekts. Guideline-Nummern immer nennen, weil das Team damit in Apples Antwort und in den Modulen suchen kann.
 
@@ -89,6 +90,7 @@ Schreibe auf Deutsch, in direkter Ansprache, ohne Floskeln. Code-Schnipsel in de
 - **OTA-Updates sind nicht verboten.** `expo-updates` und CodePush sind für Fehlerbehebungen zulässig; das Risiko entsteht, wenn damit neue Funktionen oder Verhaltensänderungen an Apple vorbei ausgeliefert werden.
 - **Fehlende Kontolöschung ist kein Befund ohne Konto.** Wenn die App keine Konten anlegt, gibt es nichts zu löschen. Prüfe zuerst, ob Registrierung überhaupt existiert.
 - **EU-, US-, Brasilien- und Japan-Sonderregeln gelten nur dort.** Frage nach Zielregionen, bevor du externe Kauf-Links als kritisch einstufst; mit passendem Entitlement und Pflichthinweisen sind sie in mehreren Märkten zulässig.
+- **MCP ist kein nachgeladener Code.** MCP überträgt JSON-Daten und Tool-Aufrufe; 2.5.2 greift erst, wenn die App aus Server-Antworten Code ausführt oder externe Prozesse wie `npx`-Server startet. Der eigentliche Befund bei MCP-Apps ist meist die fehlende Erklärung in den Review-Notizen.
 - **Nicht jede WebView ist ein Wrapper.** Eine WebView für AGB, Hilfe oder OAuth ist normal. 4.2 greift, wenn die Kernfunktion aus der WebView besteht und die App ohne Browser nichts Eigenes kann.
 
 ## Nach einer Ablehnung durch Apple

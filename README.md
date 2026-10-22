@@ -19,9 +19,9 @@ Alle fünf Abschnitte der Guidelines sind vollständig abgedeckt, jeder Punkt mi
 | Modul | Inhalt |
 |---|---|
 | 1 Sicherheit | Anstößige Inhalte, nutzergenerierte Inhalte, Kids-Kategorie, körperliche Schäden, Entwicklerinformationen, Datensicherheit, Meldung krimineller Aktivitäten |
-| 2 Leistung | Vollständigkeit, Betatests, Metadaten, Hardware-Kompatibilität, Mac-App-Store-Regeln, Software-Anforderungen (private APIs, nachgeladener Code, Hintergrundmodi, IPv6, Erweiterungen, Werbung) |
+| 2 Leistung | Vollständigkeit, Betatests, Metadaten, Hardware-Kompatibilität, Mac-App-Store-Regeln, Software-Anforderungen (private APIs, nachgeladener Code, Hintergrundmodi, IPv6, Erweiterungen, Werbung), MCP-Apps mit Entitlement-Begründung für die Review-Notizen |
 | 3 Geschäft | In-App-Kauf, externe Kauf-Links mit regionalen Sonderregeln, Abonnements, Reader-Apps, Kryptowährungen, zulässige und unzulässige Geschäftsmodelle, Paywall-Prüfung, Entscheidungsbaum für digitale Güter |
-| 4 Design | Nachahmer, Mindestfunktionalität, Spam, Erweiterungen, Apple-Dienste, Push-Benachrichtigungen, Mini-Apps und Emulatoren, Login-Dienste, Apple Pay, Monetarisierung von Systemfunktionen |
+| 4 Design | Nachahmer, Mindestfunktionalität, Spam samt vorbeugendem Eigenleistungsnachweis (4.3/4.2.6), Erweiterungen, Apple-Dienste, Push-Benachrichtigungen, Mini-Apps und Emulatoren, Login-Dienste, Apple Pay, Monetarisierung von Systemfunktionen |
 | 5 Recht | Datenschutz (Erklärung, Einwilligung, Purpose-Strings, Kontolöschung, Privacy-Manifest, ATT), Gesundheitsdaten, Kinder, Standort, geistiges Eigentum, Glücksspiel, VPN, MDM, Verhaltenskodex |
 
 Dazu kommt ein Schnellscan-Skript, das ein Projekt in Sekunden nach bekannten Mustern durchsucht: private APIs, hartcodierte Schlüssel, externe Checkout-URLs, fehlende oder vage Purpose-Strings, im nativen Code genutzte, aber nicht deklarierte Required-Reason-APIs, Aufrufe von KI-Diensten Dritter, Tracking-SDKs ohne ATT, Kontoerstellung ohne Kontolöschung, Drittanbieter-Login ohne Alternative, In-App-Käufe ohne Wiederherstellung, Android-Verweise, Hintergrundmodi, OTA-Update-Konfiguration und Debug-Reste.

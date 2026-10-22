@@ -20,7 +20,7 @@ Abschnitt 2 ist der „handwerkliche" Teil der Guidelines: Ist die App fertig, l
 - **2.2** – [Betatests](#22-betatests)
 - **2.3 Metadaten** – [2.3.1(a)](#231a-verborgene-funktionen) · [2.3.1(b)](#231b-grobes-fehlverhalten) · [2.3.2](#232-iap-angaben-in-der-beschreibung) · [2.3.3](#233-screenshots) · [2.3.4](#234-app-vorschauen) · [2.3.5](#235-kategorie) · [2.3.6](#236-altersfreigabe) · [2.3.7](#237-name-keywords-metadaten-integrität) · [2.3.8](#238-altersgerechte-metadaten) · [2.3.9](#239-rechte-an-metadaten) · [2.3.10](#2310-plattformfokus) · [2.3.11](#2311-vorbestellungen) · [2.3.12](#2312-neue-funktionen-text) · [2.3.13](#2313-in-app-events)
 - **2.4 Hardware** – [2.4.1](#241-iphone-apps-auf-dem-ipad) · [2.4.2](#242-energieeffizienz-und-gerätebelastung) · [2.4.3](#243-apple-tv-eingaben) · [2.4.4](#244-kein-neustart-keine-systemeinstellungs-manipulation) · [2.4.5](#245-mac-app-store)
-- **2.5 Software** – [2.5.1](#251-nur-öffentliche-apis-aktuelle-sdks) · [2.5.2](#252-in-sich-geschlossene-bundles-kein-nachladen-von-code) · [2.5.3](#253-schadcode) · [2.5.4](#254-hintergrundmodi-nur-bei-echtem-bedarf) · [2.5.5](#255-ipv6-only) · [2.5.6](#256-browser-müssen-webkit-nutzen) · [2.5.7](#257-entfällt) · [2.5.8](#258-keine-alternativen-home-screens-oder-desktops) · [2.5.9](#259-keine-manipulation-von-standard-ui-elementen) · [2.5.10](#2510-entfällt) · [2.5.11](#2511-sirikit-und-shortcuts) · [2.5.12](#2512-callkit-sms-filter-spam-erkennung) · [2.5.13](#2513-gesichtserkennung) · [2.5.14](#2514-aufzeichnung-von-nutzeraktivität) · [2.5.15](#2515-dateiauswahl-über-system-picker) · [2.5.16](#2516-widgets-erweiterungen-benachrichtigungen-app-clips) · [2.5.17](#2517-matter-unterstützung) · [2.5.18](#2518-display-werbung)
+- **2.5 Software** – [2.5.1](#251-nur-öffentliche-apis-aktuelle-sdks) · [2.5.2](#252-in-sich-geschlossene-bundles-kein-nachladen-von-code) · [MCP-Apps](#mcp-apps-protokoll-und-entitlements-in-den-review-notizen-erklären) · [2.5.3](#253-schadcode) · [2.5.4](#254-hintergrundmodi-nur-bei-echtem-bedarf) · [2.5.5](#255-ipv6-only) · [2.5.6](#256-browser-müssen-webkit-nutzen) · [2.5.7](#257-entfällt) · [2.5.8](#258-keine-alternativen-home-screens-oder-desktops) · [2.5.9](#259-keine-manipulation-von-standard-ui-elementen) · [2.5.10](#2510-entfällt) · [2.5.11](#2511-sirikit-und-shortcuts) · [2.5.12](#2512-callkit-sms-filter-spam-erkennung) · [2.5.13](#2513-gesichtserkennung) · [2.5.14](#2514-aufzeichnung-von-nutzeraktivität) · [2.5.15](#2515-dateiauswahl-über-system-picker) · [2.5.16](#2516-widgets-erweiterungen-benachrichtigungen-app-clips) · [2.5.17](#2517-matter-unterstützung) · [2.5.18](#2518-display-werbung)
 - [Paketreferenz React Native / Expo](#paketreferenz-react-native--expo) · [Kurz-Prüfliste](#kurz-prüfliste-für-diesen-abschnitt)
 
 ---
@@ -726,6 +726,52 @@ export default codePush({ installMode: codePush.InstallMode.IMMEDIATE })(App);
 
 **Empfohlene Behebung** – `expo-updates` mit `runtimeVersion: { policy: "fingerprint" }` und dokumentierter Release-Policy; Feature-Entwicklung ausschließlich über Store-Builds; Remote-Konfiguration als Daten (JSON), nicht als Code.
 
+### MCP-Apps: Protokoll und Entitlements in den Review-Notizen erklären
+
+**Worum es geht** – Das Model Context Protocol (MCP) kommt in den Guidelines nicht vor, und viele Gutachter kennen es nicht. Sie sehen eine App, die Netzwerkverbindungen annimmt, im lokalen Netz sucht, andere Apps steuert oder Dateien außerhalb des Dialogs liest, und finden im Interface keinen Grund dafür. Typische Folgen: Rückfrage nach 2.1 („Information Needed"), Verdacht auf nachgeladenen Code (2.5.2) oder auf unbegründete Sandbox-Rechte (2.4.5(i)). Jede dieser Runden kostet Tage. Die Abhilfe ist eine Erklärung in „Notes for Review", die MCP in zwei Sätzen erklärt, jedes Entitlement einzeln begründet und einen Testweg nennt.
+
+**Risikostufe** – Hoch für macOS-Apps mit `com.apple.security.network.server`, Apple-Events- oder Temporary-Exception-Entitlements; Mittel für reine MCP-Clients, die sich zu Remote-Servern verbinden.
+
+**Typische Konstellationen und was der Gutachter wissen muss**
+- **App ist MCP-Server (meist macOS):** Ein KI-Client wie Claude Desktop ruft Funktionen der App auf („Tools"). Für einen lokalen HTTP-Endpunkt braucht die Sandbox `com.apple.security.network.server`. Binde an `127.0.0.1`, nicht an `0.0.0.0`, und schreibe das in die Notiz: Der Gutachter will wissen, dass kein anderes Gerät die App erreicht.
+- **App ist MCP-Client:** Verbindung zu Servern, die der Nutzer einträgt → `com.apple.security.network.client`. Lokale stdio-Server über `npx`, `uvx` oder `python` zu starten, ist in der Sandbox nicht möglich und verstößt gegen 2.4.5(iv) und 2.5.2. Store-Builds beschränken sich auf Remote-Server (Streamable HTTP) oder im Bundle mitgelieferte Server.
+- **iOS/iPadOS:** Kein dauerhaft laufender Server im Hintergrund (2.5.4). MCP-Server im LAN brauchen `NSLocalNetworkUsageDescription` und, bei Bonjour, `NSBonjourServices`.
+- **Tools mit Zugriff auf App- oder Systemdaten:** Jeder Datenzugriff braucht die passende Berechtigung und den Purpose-String (5.1.1). Gehen Daten an einen KI-Anbieter, gilt zusätzlich 5.1.2(i).
+- **Tools, die andere Apps steuern (macOS):** `com.apple.security.automation.apple-events` plus `NSAppleEventsUsageDescription`; Temporary-Exception-Entitlements (`com.apple.security.temporary-exception.*`) werden einzeln hinterfragt und brauchen je einen Satz Begründung.
+- **Kein nachgeladener Code:** MCP überträgt JSON-Nachrichten (Daten und Tool-Aufrufe), keinen Code. Das gilt nur, solange die App aus Server-Antworten weder Skripte ausführt noch Plugins lädt. Prüfe das im Code, bevor du es in die Notiz schreibst.
+
+**Woran du es im Code erkennst**
+- Swift: `import MCP` (offizielles Swift-SDK `modelcontextprotocol/swift-sdk`), eigene JSON-RPC-Handler mit `"tools/list"`, `"tools/call"`, `"initialize"`; `NWListener`, `HTTPServer`, Vapor/Hummingbird im App-Target.
+- React Native/Expo/Electron-Hybride: `@modelcontextprotocol/sdk` in `package.json`, `StdioServerTransport`, `StreamableHTTPServerTransport`, `child_process.spawn`.
+- `.entitlements`: `com.apple.security.network.server`, `com.apple.security.network.client`, `com.apple.security.automation.apple-events`, `com.apple.security.files.*`, `com.apple.security.temporary-exception.*`.
+
+**Typische Verstöße**
+- ❌ `network.server` gesetzt, Server lauscht auf `0.0.0.0`, Review-Notizen leer. Der Gutachter sieht ein offenes Netzwerk-Entitlement ohne Funktion im UI.
+- ❌ MCP-Client startet `npx some-mcp-server` per `Process` – im Sandbox-Build schlägt das fehl oder führt fremden Code aus (2.5.2).
+- ✅ Einstellungsseite „MCP" mit Ein/Aus-Schalter, angezeigter Adresse `http://127.0.0.1:PORT/mcp`, Liste der Tools und Bestätigung vor schreibenden Aktionen; Notiz erklärt Protokoll, Entitlements und Testweg.
+
+**Vorlage für „Notes for Review"** – Englisch, Platzhalter ersetzen, nicht zutreffende Zeilen streichen. Rund 1.500 Bytes; zusammen mit anderen Blöcken das 4.000-Byte-Limit des Felds beachten. Ein kurzes Bildschirmvideo des Testwegs als Anhang in den App-Review-Informationen erspart dem Gutachter die Einrichtung eines KI-Clients.
+
+```text
+MODEL CONTEXT PROTOCOL (MCP)
+What MCP is: an open standard, originally published by Anthropic, that lets AI assistants call clearly defined functions ("tools") of an app via JSON-RPC. {App} acts as an MCP {server | client}.
+What it does here: {AI client, e.g. Claude Desktop} can {tool 1} and {tool 2}. {Write actions require confirmation in the app.} MCP is off by default and enabled in {Settings > MCP}.
+How to test: {steps} {| see attached screen recording}.
+Entitlements:
+- com.apple.security.network.server: local MCP endpoint, bound to 127.0.0.1 only, not reachable from other devices.
+- com.apple.security.network.client: connects only to MCP servers the user adds.
+- {entitlement}: {one-sentence reason tied to a visible feature}.
+No downloaded code (2.5.2): MCP messages are JSON data. The app does not download, install or execute code from MCP servers and launches no external processes.
+Data: tools expose {data}. {Data is sent to {provider} only after in-app consent (5.1.2(i)).}
+```
+
+**Prüfliste**
+- [ ] Jedes Entitlement im Store-Build gehört zu einer sichtbaren Funktion und hat einen Satz in den Review-Notizen.
+- [ ] Lokaler Server bindet an `127.0.0.1`; MCP ist im UI ein- und ausschaltbar und zeigt Adresse und Tools.
+- [ ] Kein Start externer Prozesse (`npx`, `uvx`, `python`) und keine Ausführung von Code aus Server-Antworten.
+- [ ] Testweg für den Gutachter beschrieben, idealerweise mit Bildschirmvideo.
+- [ ] Datenzugriffe der Tools mit Purpose-Strings abgedeckt; bei KI-Anbieter Zustimmung nach 5.1.2(i).
+
 ### 2.5.3 Schadcode
 
 **Kern der Regel** – Apps, die Schadsoftware verbreiten, das Betriebssystem oder die Hardware beschädigen oder andere Apps manipulieren, werden abgelehnt; Wiederholungstäter fliegen aus dem Developer Program.
@@ -1210,6 +1256,7 @@ await mobileAds().setRequestConfiguration({ tagForChildDirectedTreatment: true, 
 - [ ] Symbol-Scan des Archives durchgeführt
 - [ ] Kein `eval`/`new Function`/Remote-Bundle-Loader; kein `Bundle.load` auf Downloads
 - [ ] expo-updates/CodePush nur für Bugfixes; `runtimeVersion`-Policy gesetzt; keine Container-Ausbrüche
+- [ ] MCP-App: Protokoll, jedes Entitlement und Testweg in den Review-Notizen erklärt; kein Start externer MCP-Server-Prozesse
 - [ ] Dependency-Audit ohne Malware-Treffer, keine verschleierten Payloads
 - [ ] Jeder `UIBackgroundModes`-Eintrag hat Funktion und konsumierendes Paket; `voip` nur mit PushKit+CallKit; `fetch`/`processing` mit BGTaskScheduler
 - [ ] Keine IPv4-Literale, keine IPv4-only-Sockets, NAT64-Test durchgeführt
